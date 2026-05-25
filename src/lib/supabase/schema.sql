@@ -41,6 +41,7 @@ create table if not exists user_plans (
   user_id uuid primary key references auth.users(id) on delete cascade,
   plan text default 'free',
   monthly_limit integer default 20,
+  razorpay_subscription_id text,
   updated_at timestamptz default now()
 );
 alter table user_plans enable row level security;

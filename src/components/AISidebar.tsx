@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { getMonthlyUsage } from '@/lib/usage';
 import FlashcardsModal from './FlashcardsModal';
 import QuizModal from './QuizModal';
+import UpgradeModal from './UpgradeModal';
 
 interface AISidebarProps {
   note: Note | null;
@@ -46,6 +47,8 @@ export default function AISidebar({ note }: AISidebarProps) {
   const [summary, setSummary] = useState('');
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -53,6 +56,7 @@ export default function AISidebar({ note }: AISidebarProps) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      setUserEmail(user.email ?? '');
       const count = await getMonthlyUsage(user.id, supabase);
       setUsage(count);
       setLimitReached(count >= 20);
@@ -285,7 +289,12 @@ export default function AISidebar({ note }: AISidebarProps) {
             />
           </div>
           {limitReached && (
-            <p className="text-xs text-red-500 mt-1.5">Monthly limit reached. Upgrade for unlimited access.</p>
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="text-xs text-violet-600 font-medium mt-1.5 hover:underline flex items-center gap-1"
+            >
+              <Sparkles size={11} /> Upgrade to Pro for unlimited access →
+            </button>
           )}
         </div>
 
@@ -407,6 +416,13 @@ export default function AISidebar({ note }: AISidebarProps) {
         <QuizModal
           questions={quiz}
           onClose={() => setQuizOpen(false)}
+        />
+      )}
+
+      {upgradeOpen && (
+        <UpgradeModal
+          userEmail={userEmail}
+          onClose={() => setUpgradeOpen(false)}
         />
       )}
     </>
