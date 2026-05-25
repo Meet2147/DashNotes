@@ -6,7 +6,7 @@ export function useNotes() {
   const { searchQuery, selectedCollectionId, view, sortBy, calendarSelectedDate } = useAppStore();
 
   const notes = useLiveQuery(async () => {
-    let collection = db.notes.orderBy(sortBy === 'title' ? 'title' : sortBy === 'createdAt' ? 'createdAt' : 'updatedAt');
+    const collection = db.notes.orderBy(sortBy === 'title' ? 'title' : sortBy === 'createdAt' ? 'createdAt' : 'updatedAt');
 
     let results: Note[] = await collection.reverse().toArray();
 
