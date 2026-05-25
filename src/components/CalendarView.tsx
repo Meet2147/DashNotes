@@ -8,7 +8,8 @@ import { useNoteDates } from '@/hooks/useNotes';
 
 export default function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { calendarSelectedDate, setCalendarSelectedDate, setView, setMobilePanel } = useAppStore();
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState<string | null>(null);
+  const { setMobilePanel } = useAppStore();
   const noteDates = useNoteDates();
 
   const monthStart = startOfMonth(currentMonth);
@@ -50,7 +51,6 @@ export default function CalendarView() {
       setCalendarSelectedDate(null);
     } else {
       setCalendarSelectedDate(dateStr);
-      setView('calendar');
       setMobilePanel('notes');
     }
   };

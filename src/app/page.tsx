@@ -1,125 +1,154 @@
 'use client';
 
-import { useEffect } from 'react';
-import Sidebar from '@/components/Sidebar';
-import NotesList from '@/components/NotesList';
-import Editor from '@/components/Editor';
-import { useAppStore } from '@/store/useAppStore';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { BookOpen, Sparkles, LayoutGrid, ArrowRight, Brain, Zap } from 'lucide-react';
 
-export default function Home() {
-  const { darkMode, mobilePanel } = useAppStore();
+export default function LandingPage() {
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  // Check system preference on first mount
-  useEffect(() => {
-    const stored = localStorage.getItem('dashnotes-app-store');
-    if (!stored) {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        document.documentElement.classList.add('dark');
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        router.replace('/app');
+      } else {
+        setChecking(false);
       }
-    }
-  }, []);
+    });
+  }, [router]);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900">
-      {/* Sidebar — always visible on desktop, hidden on mobile */}
-      <div className="hidden md:flex flex-col flex-shrink-0">
-        <Sidebar />
-      </div>
-
-      {/* Mobile sidebar panel */}
-      <div
-        className={`
-          flex-col flex-shrink-0 w-full
-          ${mobilePanel === 'sidebar' ? 'flex' : 'hidden'}
-          md:hidden
-        `}
-      >
-        <Sidebar />
-      </div>
-
-      {/* Notes List */}
-      <div
-        className={`
-          flex-col flex-shrink-0 w-full md:w-72 lg:w-80
-          ${mobilePanel === 'notes' ? 'flex' : 'hidden md:flex'}
-        `}
-      >
-        <NotesList />
-      </div>
-
-      {/* Editor */}
-      <div
-        className={`
-          flex-1 flex-col min-w-0
-          ${mobilePanel === 'editor' ? 'flex' : 'hidden md:flex'}
-        `}
-      >
-        <Editor />
-      </div>
-
-      {/* Mobile bottom navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex z-50">
-        <MobileNavBtn
-          label="Notes"
-          active={mobilePanel === 'notes'}
-          onClick={() => useAppStore.getState().setMobilePanel('notes')}
-        >
-          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </MobileNavBtn>
-        <MobileNavBtn
-          label="Write"
-          active={mobilePanel === 'editor'}
-          onClick={() => useAppStore.getState().setMobilePanel('editor')}
-        >
-          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
-          </svg>
-        </MobileNavBtn>
-        <MobileNavBtn
-          label="Menu"
-          active={mobilePanel === 'sidebar'}
-          onClick={() => useAppStore.getState().setMobilePanel('sidebar')}
-        >
-          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
-        </MobileNavBtn>
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-violet-950 to-gray-950 text-white">
+      {/* Nav */}
+      <nav className="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center">
+            <BookOpen size={16} className="text-white" />
+          </div>
+          <span className="font-bold text-lg tracking-tight">OpenNote</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/login"
+            className="text-sm text-gray-300 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-white/10"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/login"
+            className="text-sm bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            Get started free
+          </Link>
+        </div>
       </nav>
+
+      {/* Hero */}
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-24 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-900/50 border border-violet-700/50 text-violet-300 text-sm mb-8">
+          <Sparkles size={14} />
+          Powered by Claude AI
+        </div>
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
+          The notebook that{' '}
+          <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+            thinks with you
+          </span>
+        </h1>
+        <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+          A Notion-style block editor meets Claude AI tutor. Write notes, then let Feynman AI help you truly understand — with Socratic dialogue, flashcards, and quizzes.
+        </p>
+        <div className="flex items-center justify-center gap-4 flex-wrap">
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-8 py-4 rounded-xl text-base font-semibold transition-all shadow-lg shadow-violet-900/50 hover:shadow-violet-800/50 hover:scale-105"
+          >
+            Get started free
+            <ArrowRight size={18} />
+          </Link>
+          <span className="text-gray-500 text-sm">No credit card required</span>
+        </div>
+      </section>
+
+      {/* Feature cards */}
+      <section className="max-w-5xl mx-auto px-6 pb-24">
+        <div className="grid md:grid-cols-3 gap-6">
+          <FeatureCard
+            icon={<LayoutGrid className="text-violet-400" size={24} />}
+            iconBg="bg-violet-900/50"
+            title="Block Editor"
+            description="Notion-style slash commands for paragraphs, headings, lists, code, quotes, and more. Rich, structured notes without the complexity."
+          />
+          <FeatureCard
+            icon={<Brain className="text-cyan-400" size={24} />}
+            iconBg="bg-cyan-900/50"
+            title="Feynman AI Tutor"
+            description="Chat with Feynman, your personal AI tutor. It reads your notes and uses the Socratic method to guide you toward deep understanding."
+          />
+          <FeatureCard
+            icon={<Zap className="text-amber-400" size={24} />}
+            iconBg="bg-amber-900/50"
+            title="Flashcards & Quizzes"
+            description="Auto-generate flip-card flashcard decks and multiple-choice quizzes from your notes in one click. Study smarter, not harder."
+          />
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="max-w-3xl mx-auto px-6 pb-24 text-center">
+        <div className="bg-gradient-to-r from-violet-900/60 to-cyan-900/60 border border-violet-700/30 rounded-3xl p-10">
+          <h2 className="text-3xl font-bold mb-4">Start learning smarter today</h2>
+          <p className="text-gray-400 mb-8">
+            Free plan includes 20 AI requests per month. No credit card needed.
+          </p>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 bg-white text-gray-900 hover:bg-gray-100 px-8 py-4 rounded-xl text-base font-semibold transition-all"
+          >
+            Create free account
+            <ArrowRight size={18} />
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10 py-8 text-center text-gray-600 text-sm">
+        <p>© 2026 OpenNote. Built with Next.js + Claude AI.</p>
+      </footer>
     </div>
   );
 }
 
-function MobileNavBtn({
-  label,
-  active,
-  onClick,
-  children,
+function FeatureCard({
+  icon,
+  iconBg,
+  title,
+  description,
 }: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  description: string;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs font-medium transition-colors ${
-        active ? 'text-violet-600 dark:text-violet-400' : 'text-gray-400 dark:text-gray-500'
-      }`}
-    >
-      {children}
-      {label}
-    </button>
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/8 transition-colors">
+      <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center mb-4`}>
+        {icon}
+      </div>
+      <h3 className="font-semibold text-white text-lg mb-2">{title}</h3>
+      <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+    </div>
   );
 }

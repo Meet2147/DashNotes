@@ -1,18 +1,17 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import ServiceWorkerRegistration from './sw-register';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'DashNotes – Beautiful Notes & Journal',
-  description: 'A fast, offline-first notes app. Write rich notes, organize with collections, browse by calendar.',
+  title: 'OpenNote – AI-Powered Learning Notebook',
+  description: 'A Notion-style block editor with Claude AI tutor built in. Learn smarter with Feynman AI, flashcards, and quizzes.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'DashNotes',
+    title: 'OpenNote',
   },
 };
 
@@ -29,8 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="h-screen overflow-hidden antialiased font-sans bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        <ServiceWorkerRegistration />
+      <body className="h-screen overflow-hidden antialiased font-sans bg-white text-gray-900">
         {children}
       </body>
     </html>

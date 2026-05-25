@@ -1,54 +1,5 @@
 @import "tailwindcss";
 
-/* TipTap prose styles */
-.prose {
-  color: inherit;
-  line-height: 1.75;
-}
-.prose h1 { font-size: 1.75rem; font-weight: 700; margin: 1rem 0 0.5rem; }
-.prose h2 { font-size: 1.4rem; font-weight: 700; margin: 1rem 0 0.5rem; }
-.prose h3 { font-size: 1.15rem; font-weight: 600; margin: 0.75rem 0 0.25rem; }
-.prose p { margin: 0.5rem 0; }
-.prose ul { list-style: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
-.prose ol { list-style: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
-.prose li { margin: 0.25rem 0; }
-.prose blockquote {
-  border-left: 3px solid #7C3AED;
-  padding-left: 1rem;
-  margin: 0.75rem 0;
-  color: #6b7280;
-  font-style: italic;
-}
-.prose hr { border-color: #e5e7eb; margin: 1rem 0; }
-.prose strong { font-weight: 700; }
-.prose em { font-style: italic; }
-.prose u { text-decoration: underline; }
-.prose s { text-decoration: line-through; }
-.prose img { max-width: 100%; border-radius: 0.5rem; margin: 0.5rem 0; }
-.prose code {
-  background: #f3f4f6;
-  padding: 0.1rem 0.3rem;
-  border-radius: 0.25rem;
-  font-family: monospace;
-  font-size: 0.875em;
-}
-
-.dark .prose blockquote { color: #9ca3af; border-color: #7C3AED; }
-.dark .prose hr { border-color: #374151; }
-.dark .prose code { background: #1f2937; }
-
-/* TipTap placeholder */
-.tiptap p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  color: #9ca3af;
-  pointer-events: none;
-  height: 0;
-}
-.dark .tiptap p.is-editor-empty:first-child::before {
-  color: #4b5563;
-}
-
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -56,3 +7,14 @@
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 .dark ::-webkit-scrollbar-thumb { background: #374151; }
 .dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+/* BlockNote editor overrides */
+.bn-editor {
+  min-height: 300px;
+  padding: 1rem 0;
+}
+
+/* Ensure BlockNote works in dark mode */
+.dark .bn-container {
+  color-scheme: dark;
+}
