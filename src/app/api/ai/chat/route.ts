@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { anthropic } from '@/lib/anthropic';
 import { canUseAI, incrementUsage } from '@/lib/usage';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const allowed = await canUseAI(user.id, supabase);
+  const allowed = await canUseAI(userId);
   if (!allowed) {
     return NextResponse.json({ error: 'limit_reached' }, { status: 429 });
   }
 
   const { noteContent, messages } = await req.json();
 
-  await incrementUsage(user.id, 'chat', supabase);
+  await incrementUsage(userId, 'chat');
 
   const systemPrompt = `You are Feynman, an AI tutor embedded in OpenNote. You help students understand the concepts in their notes using the Socratic method. Reference specific parts of their notes, ask guiding questions, and give clear, simple explanations. Be concise and encouraging. Here are the user's current notes:\n\n${noteContent || '(no note content yet)'}`;
 
