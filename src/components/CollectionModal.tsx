@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { db, Collection, COLLECTION_COLORS } from '@/lib/db';
 
@@ -10,22 +10,18 @@ interface CollectionModalProps {
   collection?: Collection | null;
 }
 
-export default function CollectionModal({ isOpen, onClose, collection }: CollectionModalProps) {
-  const [name, setName] = useState('');
-  const [color, setColor] = useState(COLLECTION_COLORS[0]);
+// Inner form component – receives initial values as props and manages its own state.
+// Wrapped by CollectionModal which passes a key so React remounts it cleanly.
+function CollectionForm({
+  onClose,
+  collection,
+}: {
+  onClose: () => void;
+  collection?: Collection | null;
+}) {
+  const [name, setName] = useState(collection?.name ?? '');
+  const [color, setColor] = useState(collection?.color ?? COLLECTION_COLORS[0]);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (collection) {
-      setName(collection.name);
-      setColor(collection.color);
-    } else {
-      setName('');
-      setColor(COLLECTION_COLORS[0]);
-    }
-  }, [collection, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +44,6 @@ export default function CollectionModal({ isOpen, onClose, collection }: Collect
     if (!collection?.id) return;
     if (!confirm('Delete this collection? Notes will not be deleted.')) return;
     await db.collections.delete(collection.id);
-    // Remove collectionId from notes
     const notesInCollection = await db.notes.where('collectionId').equals(collection.id).toArray();
     await Promise.all(
       notesInCollection.map((n) => db.notes.update(n.id!, { collectionId: undefined }))
@@ -99,7 +94,7 @@ export default function CollectionModal({ isOpen, onClose, collection }: Collect
                   key={c}
                   type="button"
                   onClick={() => setColor(c)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 transition-all"
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
                   style={{
                     backgroundColor: c,
                     outline: color === c ? `3px solid ${c}` : '3px solid transparent',
@@ -141,5 +136,17 @@ export default function CollectionModal({ isOpen, onClose, collection }: Collect
         </form>
       </div>
     </div>
+  );
+}
+
+export default function CollectionModal({ isOpen, onClose, collection }: CollectionModalProps) {
+  if (!isOpen) return null;
+  // Use collection.id (or 'new') as key so the form remounts cleanly on each open
+  return (
+    <CollectionForm
+      key={collection?.id ?? 'new'}
+      onClose={onClose}
+      collection={collection}
+    />
   );
 }

@@ -24,6 +24,53 @@ import ExportModal from './ExportModal';
 
 const AUTOSAVE_DELAY = 800;
 
+// ToolbarBtn defined outside component to avoid recreation on render
+function ToolbarBtn({
+  onClick,
+  active,
+  title: t,
+  children,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onMouseDown={(e) => { e.preventDefault(); onClick(); }}
+      title={t}
+      className={`p-1.5 rounded-md text-sm transition-colors ${
+        active
+          ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'
+          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ToolbarDivider() {
+  return <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />;
+}
+
+function EmptyEditor() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full bg-gray-50 dark:bg-gray-900 text-center px-8">
+      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex items-center justify-center mb-5">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-violet-400" stroke="currentColor" strokeWidth="1.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-2">No note selected</h3>
+      <p className="text-sm text-gray-400 dark:text-gray-500 max-w-xs">
+        Select a note from the list or create a new one to start writing.
+      </p>
+    </div>
+  );
+}
+
 export default function Editor() {
   const { selectedNoteId, setSelectedNoteId, setMobilePanel } = useAppStore();
   const note = useNote(selectedNoteId);
@@ -43,53 +90,8 @@ export default function Editor() {
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Image.configure({ inline: false, allowBase64: true }),
-      Placeholder.configure({ placeholder: 'Start writing...' }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    ],
-    content: '',
-    onUpdate: ({ editor }) => {
-      const text = editor.getText();
-      setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0);
-      scheduleSave({ content: editor.getHTML() });
-    },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-6 py-4',
-      },
-    },
-  });
-
-  // Sync note into local state when note changes
-  useEffect(() => {
-    if (!note) return;
-    setTitle(note.title);
-    setTags(note.tags);
-    setPinned(note.pinned);
-    setLocked(note.locked);
-    setNoteColor(note.color);
-    setCollectionId(note.collectionId);
-
-    if (editor && editor.getHTML() !== note.content) {
-      editor.commands.setContent(note.content || '');
-    }
-
-    const text = editor?.getText() ?? '';
-    setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [note?.id]);
-
-  // Focus title on new empty note
-  useEffect(() => {
-    if (note && note.title === '' && note.content === '' && titleRef.current) {
-      titleRef.current.focus();
-    }
-  }, [note?.id]);
+  // Track which note ID we've synced to avoid unnecessary editor re-sets
+  const syncedNoteIdRef = useRef<number | null>(null);
 
   const scheduleSave = useCallback(
     (partial: Partial<{ title: string; content: string; tags: string[]; pinned: boolean; locked: boolean; color: string; collectionId: number | undefined }>) => {
@@ -103,6 +105,60 @@ export default function Editor() {
     },
     [selectedNoteId]
   );
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Image.configure({ inline: false, allowBase64: true }),
+      Placeholder.configure({ placeholder: 'Start writing...' }),
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    ],
+    content: '',
+    onUpdate: ({ editor: ed }) => {
+      const text = ed.getText();
+      setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0);
+      scheduleSave({ content: ed.getHTML() });
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-6 py-4',
+      },
+    },
+  });
+
+  // Sync note data into local state when the selected note changes
+  useEffect(() => {
+    if (!note || note.id === syncedNoteIdRef.current) return;
+    syncedNoteIdRef.current = note.id ?? null;
+
+    setTitle(note.title);
+    setTags(note.tags);
+    setPinned(note.pinned);
+    setLocked(note.locked);
+    setNoteColor(note.color);
+    setCollectionId(note.collectionId);
+
+    if (editor) {
+      const currentHtml = editor.getHTML();
+      if (currentHtml !== note.content) {
+        // setContent triggers onUpdate which updates wordCount
+        editor.commands.setContent(note.content || '');
+      }
+    }
+
+    // Focus title on new empty note
+    if (note.title === '' && note.content === '' && titleRef.current) {
+      titleRef.current.focus();
+    }
+  }, [note, editor]);
+
+  // Reset synced ref when note ID changes so we always re-sync on note switch
+  useEffect(() => {
+    if (selectedNoteId !== syncedNoteIdRef.current) {
+      syncedNoteIdRef.current = null;
+    }
+  }, [selectedNoteId]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
@@ -169,34 +225,14 @@ export default function Editor() {
     return <EmptyEditor />;
   }
 
-  const ToolbarBtn = ({
-    onClick,
-    active,
-    title: t,
-    children,
-  }: {
-    onClick: () => void;
-    active?: boolean;
-    title: string;
-    children: React.ReactNode;
-  }) => (
-    <button
-      onMouseDown={(e) => { e.preventDefault(); onClick(); }}
-      title={t}
-      className={`p-1.5 rounded-md text-sm transition-colors ${
-        active
-          ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'
-          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
-      }`}
-    >
-      {children}
-    </button>
-  );
-
-  const Divider = () => <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />;
-
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800" style={{ backgroundColor: noteColor !== '#ffffff' && noteColor !== '#FFFFFF' ? noteColor + '22' : undefined }}>
+    <div
+      className="flex flex-col h-full bg-white dark:bg-gray-800"
+      style={{
+        backgroundColor:
+          noteColor !== '#ffffff' && noteColor !== '#FFFFFF' ? noteColor + '22' : undefined,
+      }}
+    >
       {/* Mobile back button */}
       <div className="md:hidden flex items-center px-3 pt-3">
         <button
@@ -222,7 +258,7 @@ export default function Editor() {
           <Strikethrough size={14} />
         </ToolbarBtn>
 
-        <Divider />
+        <ToolbarDivider />
 
         <ToolbarBtn onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} active={editor?.isActive('heading', { level: 1 })} title="Heading 1">
           <Heading1 size={14} />
@@ -234,7 +270,7 @@ export default function Editor() {
           <Heading3 size={14} />
         </ToolbarBtn>
 
-        <Divider />
+        <ToolbarDivider />
 
         <ToolbarBtn onClick={() => editor?.chain().focus().toggleBulletList().run()} active={editor?.isActive('bulletList')} title="Bullet List">
           <List size={14} />
@@ -249,7 +285,7 @@ export default function Editor() {
           <Minus size={14} />
         </ToolbarBtn>
 
-        <Divider />
+        <ToolbarDivider />
 
         <ToolbarBtn onClick={() => editor?.chain().focus().setTextAlign('left').run()} active={editor?.isActive({ textAlign: 'left' })} title="Align Left">
           <AlignLeft size={14} />
@@ -261,7 +297,7 @@ export default function Editor() {
           <AlignRight size={14} />
         </ToolbarBtn>
 
-        <Divider />
+        <ToolbarDivider />
 
         <ToolbarBtn onClick={handleImageInsert} title="Insert Image">
           <ImageIcon size={14} />
@@ -398,22 +434,6 @@ export default function Editor() {
       {exportOpen && note && (
         <ExportModal isOpen={exportOpen} onClose={() => setExportOpen(false)} note={{ ...note, title, tags }} />
       )}
-    </div>
-  );
-}
-
-function EmptyEditor() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full bg-gray-50 dark:bg-gray-900 text-center px-8">
-      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex items-center justify-center mb-5">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-violet-400" stroke="currentColor" strokeWidth="1.5">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-        </svg>
-      </div>
-      <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-2">No note selected</h3>
-      <p className="text-sm text-gray-400 dark:text-gray-500 max-w-xs">
-        Select a note from the list or create a new one to start writing.
-      </p>
     </div>
   );
 }
