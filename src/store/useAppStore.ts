@@ -1,31 +1,30 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ViewType = 'all' | 'collection' | 'calendar' | 'tags';
-export type SortType = 'updatedAt' | 'createdAt' | 'title';
+export type ViewType = 'all' | 'collection' | 'tags';
 export type MobilePanel = 'sidebar' | 'notes' | 'editor';
+export type SortBy = 'updated_at' | 'created_at' | 'title';
 
 interface AppState {
-  selectedNoteId: number | null;
-  selectedCollectionId: number | null;
+  selectedNoteId: string | null;
+  selectedCollectionId: string | null;
   searchQuery: string;
   view: ViewType;
-  darkMode: boolean;
   sidebarOpen: boolean;
-  sortBy: SortType;
+  aiSidebarOpen: boolean;
   mobilePanel: MobilePanel;
-  calendarSelectedDate: string | null; // ISO date string
+  sortBy: SortBy;
 
-  setSelectedNoteId: (id: number | null) => void;
-  setSelectedCollectionId: (id: number | null) => void;
+  setSelectedNoteId: (id: string | null) => void;
+  setSelectedCollectionId: (id: string | null) => void;
   setSearchQuery: (query: string) => void;
   setView: (view: ViewType) => void;
-  toggleDarkMode: () => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
-  setSortBy: (sort: SortType) => void;
+  setAiSidebarOpen: (open: boolean) => void;
+  toggleAiSidebar: () => void;
   setMobilePanel: (panel: MobilePanel) => void;
-  setCalendarSelectedDate: (date: string | null) => void;
+  setSortBy: (sort: SortBy) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -35,30 +34,30 @@ export const useAppStore = create<AppState>()(
       selectedCollectionId: null,
       searchQuery: '',
       view: 'all',
-      darkMode: false,
       sidebarOpen: true,
-      sortBy: 'updatedAt',
+      aiSidebarOpen: false,
       mobilePanel: 'notes',
-      calendarSelectedDate: null,
+      sortBy: 'updated_at',
 
       setSelectedNoteId: (id) => set({ selectedNoteId: id }),
       setSelectedCollectionId: (id) => set({ selectedCollectionId: id }),
       setSearchQuery: (query) => set({ searchQuery: query }),
       setView: (view) => set({ view }),
-      toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-      setSortBy: (sort) => set({ sortBy: sort }),
+      setAiSidebarOpen: (open) => set({ aiSidebarOpen: open }),
+      toggleAiSidebar: () =>
+        set((state) => ({ aiSidebarOpen: !state.aiSidebarOpen })),
       setMobilePanel: (panel) => set({ mobilePanel: panel }),
-      setCalendarSelectedDate: (date) => set({ calendarSelectedDate: date }),
+      setSortBy: (sortBy) => set({ sortBy }),
     }),
     {
-      name: 'dashnotes-app-store',
+      name: 'opennote-app-store',
       partialize: (state) => ({
-        darkMode: state.darkMode,
         sidebarOpen: state.sidebarOpen,
-        sortBy: state.sortBy,
+        aiSidebarOpen: state.aiSidebarOpen,
         view: state.view,
+        sortBy: state.sortBy,
       }),
     }
   )
