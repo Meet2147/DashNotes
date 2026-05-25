@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   turbopack: {},
+  output: 'standalone',
 };
 
 module.exports = nextConfig;
