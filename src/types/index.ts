@@ -1,29 +1,28 @@
 export interface Collection {
   id: string;
-  user_id: string;
   name: string;
   color: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface Note {
   id: string;
-  user_id: string;
   title: string;
-  content: unknown[];
-  collection_id: string | null;
+  content: unknown[]; // BlockNote JSON blocks
   tags: string[];
   color: string;
   pinned: boolean;
-  created_at: string;
-  updated_at: string;
+  collectionId: string | null;
+  collection?: { id: string; name: string; color: string } | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserPlan {
-  user_id: string;
+  userId: string;
   plan: string;
-  monthly_limit: number;
-  updated_at: string;
+  monthlyLimit: number;
+  updatedAt: string;
 }
 
 export interface Flashcard {

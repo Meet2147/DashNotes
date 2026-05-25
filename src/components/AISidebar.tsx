@@ -4,8 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { Note, ChatMessage, Flashcard, QuizQuestion } from '@/types';
 import { X, Send, Loader2, Sparkles, CreditCard, BookOpen, FileText } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { getMonthlyUsage } from '@/lib/usage';
+import { useSession } from 'next-auth/react';
 import FlashcardsModal from './FlashcardsModal';
 import QuizModal from './QuizModal';
 import UpgradeModal from './UpgradeModal';
@@ -36,10 +35,12 @@ function getNoteText(note: Note | null): string {
 
 export default function AISidebar({ note }: AISidebarProps) {
   const { aiSidebarOpen, toggleAiSidebar } = useAppStore();
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [usage, setUsage] = useState(0);
+  const [limit, setLimit] = useState(20);
   const [flashcardsOpen, setFlashcardsOpen] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -48,25 +49,21 @@ export default function AISidebar({ note }: AISidebarProps) {
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const loadUsage = useCallback(async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setUserEmail(user.email ?? '');
-      const count = await getMonthlyUsage(user.id, supabase);
-      setUsage(count);
-      setLimitReached(count >= 20);
+    const res = await fetch('/api/usage');
+    if (res.ok) {
+      const data = await res.json();
+      setUsage(data.usage);
+      setLimit(data.limit);
+      setLimitReached(data.usage >= data.limit);
     }
   }, []);
 
   useEffect(() => {
-    if (aiSidebarOpen) {
-      loadUsage();
-    }
+    if (aiSidebarOpen) loadUsage();
   }, [aiSidebarOpen, loadUsage]);
 
   useEffect(() => {
@@ -95,7 +92,7 @@ export default function AISidebar({ note }: AISidebarProps) {
         setLimitReached(true);
         setMessages((prev) => [...prev, {
           role: 'assistant',
-          content: "You've reached your monthly limit of 20 AI requests. Upgrade to Pro for unlimited access.",
+          content: `You've reached your monthly limit of ${limit} AI requests. Upgrade to Pro for unlimited access.`,
         }]);
         setIsStreaming(false);
         return;
@@ -277,7 +274,7 @@ export default function AISidebar({ note }: AISidebarProps) {
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs text-gray-500">Monthly AI requests</span>
             <span className={`text-xs font-semibold ${limitReached ? 'text-red-500' : 'text-gray-700'}`}>
-              {usage}/20
+              {usage}/{limit}
             </span>
           </div>
           <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -285,7 +282,7 @@ export default function AISidebar({ note }: AISidebarProps) {
               className={`h-full rounded-full transition-all ${
                 limitReached ? 'bg-red-500' : usage > 15 ? 'bg-amber-500' : 'bg-cyan-500'
               }`}
-              style={{ width: `${Math.min((usage / 20) * 100, 100)}%` }}
+              style={{ width: `${Math.min((usage / limit) * 100, 100)}%` }}
             />
           </div>
           {limitReached && (
@@ -421,7 +418,7 @@ export default function AISidebar({ note }: AISidebarProps) {
 
       {upgradeOpen && (
         <UpgradeModal
-          userEmail={userEmail}
+          userEmail={session?.user?.email ?? ''}
           onClose={() => setUpgradeOpen(false)}
         />
       )}

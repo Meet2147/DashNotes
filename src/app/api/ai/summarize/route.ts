@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { anthropic } from '@/lib/anthropic';
 import { canUseAI, incrementUsage } from '@/lib/usage';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const allowed = await canUseAI(user.id, supabase);
+  const allowed = await canUseAI(userId);
   if (!allowed) {
     return NextResponse.json({ error: 'limit_reached' }, { status: 429 });
   }
@@ -24,7 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No note content provided' }, { status: 400 });
   }
 
-  await incrementUsage(user.id, 'summarize', supabase);
+  await incrementUsage(userId, 'summarize');
 
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5',

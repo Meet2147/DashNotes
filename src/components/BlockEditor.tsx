@@ -4,7 +4,6 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
-import { createClient } from '@/lib/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { Note } from '@/types';
 import { Pin, Trash2, ChevronLeft, Loader2, BookOpen } from 'lucide-react';
@@ -86,11 +85,11 @@ export default function BlockEditor({ note }: BlockEditorProps) {
       const noteId = currentNoteId.current;
       saveTimer.current = setTimeout(async () => {
         setIsSaving(true);
-        const supabase = createClient();
-        await supabase
-          .from('notes')
-          .update({ ...partial, updated_at: new Date().toISOString() })
-          .eq('id', noteId);
+        await fetch(`/api/notes/${noteId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(partial),
+        });
         setIsSaving(false);
       }, AUTOSAVE_DELAY);
     },
@@ -119,8 +118,7 @@ export default function BlockEditor({ note }: BlockEditorProps) {
   const handleDelete = async () => {
     if (!note) return;
     if (!confirm('Delete this note? This cannot be undone.')) return;
-    const supabase = createClient();
-    await supabase.from('notes').delete().eq('id', note.id);
+    await fetch(`/api/notes/${note.id}`, { method: 'DELETE' });
     setSelectedNoteId(null);
   };
 

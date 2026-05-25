@@ -3,7 +3,6 @@
 import nextDynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/Sidebar';
 import NotesList from '@/components/NotesList';
 import AISidebar from '@/components/AISidebar';
@@ -30,16 +29,13 @@ export default function AppPage() {
       return;
     }
     setNoteLoading(true);
-    const supabase = createClient();
-    supabase
-      .from('notes')
-      .select('*')
-      .eq('id', selectedNoteId)
-      .single()
-      .then(({ data }) => {
+    fetch(`/api/notes/${selectedNoteId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
         setSelectedNote(data ?? null);
         setNoteLoading(false);
-      });
+      })
+      .catch(() => setNoteLoading(false));
   }, [selectedNoteId]);
 
   return (

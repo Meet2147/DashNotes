@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export type ViewType = 'all' | 'collection' | 'tags';
 export type MobilePanel = 'sidebar' | 'notes' | 'editor';
-export type SortBy = 'updated_at' | 'created_at' | 'title';
+export type SortBy = 'updatedAt' | 'createdAt' | 'title';
 
 interface AppState {
   selectedNoteId: string | null;
@@ -37,7 +37,7 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       aiSidebarOpen: false,
       mobilePanel: 'notes',
-      sortBy: 'updated_at',
+      sortBy: 'updatedAt',
 
       setSelectedNoteId: (id) => set({ selectedNoteId: id }),
       setSelectedCollectionId: (id) => set({ selectedCollectionId: id }),

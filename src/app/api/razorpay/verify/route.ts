@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createClient } from '@/lib/supabase/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = session.user.id;
 
   const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature } = await req.json();
 
@@ -24,15 +23,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Upgrade user to Pro
-  await supabase
-    .from('user_plans')
-    .upsert({
-      user_id: user.id,
-      plan: 'pro',
-      monthly_limit: 10000,
-      razorpay_subscription_id,
-      updated_at: new Date().toISOString(),
-    });
+  await prisma.userPlan.upsert({
+    where: { userId },
+    update: { plan: 'pro', monthlyLimit: 10000, razorpaySubscriptionId: razorpay_subscription_id },
+    create: { userId, plan: 'pro', monthlyLimit: 10000, razorpaySubscriptionId: razorpay_subscription_id },
+  });
 
   return NextResponse.json({ success: true });
 }

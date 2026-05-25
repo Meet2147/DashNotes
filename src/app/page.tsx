@@ -2,24 +2,23 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Sparkles, LayoutGrid, ArrowRight, Brain, Zap } from 'lucide-react';
 
 export default function LandingPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        router.replace('/app');
-      } else {
-        setChecking(false);
-      }
-    });
-  }, [router]);
+    if (status === 'loading') return;
+    if (session) {
+      router.replace('/app');
+    } else {
+      setChecking(false);
+    }
+  }, [session, status, router]);
 
   if (checking) {
     return (

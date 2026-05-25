@@ -18,7 +18,7 @@ import {
   User,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
-import { createClient } from '@/lib/supabase/client';
+import { signOut, useSession } from 'next-auth/react';
 import { Collection } from '@/types';
 
 function NavItem({
@@ -73,30 +73,25 @@ export default function Sidebar() {
     setMobilePanel,
   } = useAppStore();
 
+  const { data: session } = useSession();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [collectionsExpanded, setCollectionsExpanded] = useState(true);
   const [collectionModalOpen, setCollectionModalOpen] = useState(false);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionColor, setNewCollectionColor] = useState(COLLECTION_COLORS[0]);
-  const [userEmail, setUserEmail] = useState('');
   const [darkMode, setDarkMode] = useState(false);
 
   const loadCollections = useCallback(async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('collections')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (data) setCollections(data);
+    const res = await fetch('/api/collections');
+    if (res.ok) {
+      const data: Collection[] = await res.json();
+      setCollections(data);
+    }
   }, []);
 
   useEffect(() => {
     loadCollections();
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserEmail(user.email ?? '');
-    });
   }, [loadCollections]);
 
   const handleNavClick = (v: typeof view) => {
@@ -115,17 +110,19 @@ export default function Sidebar() {
 
   const handleSaveCollection = async () => {
     if (!newCollectionName.trim()) return;
-    const supabase = createClient();
 
     if (editingCollection) {
-      await supabase
-        .from('collections')
-        .update({ name: newCollectionName, color: newCollectionColor })
-        .eq('id', editingCollection.id);
+      await fetch(`/api/collections/${editingCollection.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCollectionName, color: newCollectionColor }),
+      });
     } else {
-      await supabase
-        .from('collections')
-        .insert({ name: newCollectionName, color: newCollectionColor });
+      await fetch('/api/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCollectionName, color: newCollectionColor }),
+      });
     }
     await loadCollections();
     setCollectionModalOpen(false);
@@ -136,8 +133,7 @@ export default function Sidebar() {
 
   const handleDeleteCollection = async (id: string) => {
     if (!confirm('Delete this collection? Notes will not be deleted.')) return;
-    const supabase = createClient();
-    await supabase.from('collections').delete().eq('id', id);
+    await fetch(`/api/collections/${id}`, { method: 'DELETE' });
     await loadCollections();
     if (selectedCollectionId === id) {
       setSelectedCollectionId(null);
@@ -154,8 +150,7 @@ export default function Sidebar() {
   };
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await signOut({ callbackUrl: '/login' });
   };
 
   const toggleDarkMode = () => {
@@ -163,6 +158,8 @@ export default function Sidebar() {
     setDarkMode(next);
     document.documentElement.classList.toggle('dark', next);
   };
+
+  const userEmail = session?.user?.email ?? '';
 
   return (
     <>

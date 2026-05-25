@@ -9,8 +9,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { createClient } from '@/lib/supabase/client';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, SortBy } from '@/store/useAppStore';
 import { Note, Collection } from '@/types';
 
 function stripBlocks(content: unknown[]): string {
@@ -52,23 +51,13 @@ export default function NotesList() {
   const [loading, setLoading] = useState(true);
 
   const loadNotes = useCallback(async () => {
-    const supabase = createClient();
-    let query = supabase.from('notes').select('*');
+    const res = await fetch('/api/notes');
+    if (!res.ok) { setLoading(false); return; }
+    let results: Note[] = await res.json();
 
     if (view === 'collection' && selectedCollectionId) {
-      query = query.eq('collection_id', selectedCollectionId);
+      results = results.filter((n) => n.collectionId === selectedCollectionId);
     }
-
-    if (sortBy === 'title') {
-      query = query.order('title', { ascending: true });
-    } else {
-      query = query.order(sortBy, { ascending: false });
-    }
-
-    const { data } = await query;
-    if (!data) { setLoading(false); return; }
-
-    let results = data as Note[];
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -80,6 +69,16 @@ export default function NotesList() {
       );
     }
 
+    // Sort
+    if (sortBy === 'title') {
+      results.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === 'createdAt') {
+      results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else {
+      results.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }
+
+    // Pinned always on top
     results.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
     setNotes(results);
@@ -87,9 +86,11 @@ export default function NotesList() {
   }, [view, selectedCollectionId, sortBy, searchQuery]);
 
   const loadCollections = useCallback(async () => {
-    const supabase = createClient();
-    const { data } = await supabase.from('collections').select('*');
-    if (data) setCollections(data as Collection[]);
+    const res = await fetch('/api/collections');
+    if (res.ok) {
+      const data: Collection[] = await res.json();
+      setCollections(data);
+    }
   }, []);
 
   useEffect(() => {
@@ -102,20 +103,20 @@ export default function NotesList() {
   }, [loadCollections]);
 
   const createNote = async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('notes')
-      .insert({
+    const res = await fetch('/api/notes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         title: 'Untitled',
         content: [],
         tags: [],
         color: NOTE_COLORS[NOTE_COLORS.length - 1],
         pinned: false,
-        collection_id: view === 'collection' ? selectedCollectionId : null,
-      })
-      .select()
-      .single();
-    if (data) {
+        collectionId: view === 'collection' ? selectedCollectionId : null,
+      }),
+    });
+    if (res.ok) {
+      const data: Note = await res.json();
       await loadNotes();
       setSelectedNoteId(data.id);
       setMobilePanel('editor');
@@ -129,11 +130,11 @@ export default function NotesList() {
 
   const collectionMap = new Map(collections.map((c) => [c.id, c]));
 
-  const sortOptions = [
-    { value: 'updated_at', label: 'Last Modified' },
-    { value: 'created_at', label: 'Date Created' },
+  const sortOptions: { value: SortBy; label: string }[] = [
+    { value: 'updatedAt', label: 'Last Modified' },
+    { value: 'createdAt', label: 'Date Created' },
     { value: 'title', label: 'Title (A-Z)' },
-  ] as const;
+  ];
 
   const viewTitle = () => {
     switch (view) {
@@ -204,9 +205,9 @@ export default function NotesList() {
         ) : (
           <div className="p-2 space-y-1">
             {notes.map((note) => {
-              const collection = note.collection_id ? collectionMap.get(note.collection_id) : null;
+              const collection = note.collectionId ? collectionMap.get(note.collectionId) : null;
               const preview = stripBlocks(note.content).slice(0, 100);
-              const noteDate = new Date(note.updated_at || note.created_at);
+              const noteDate = new Date(note.updatedAt || note.createdAt);
               const isSelected = selectedNoteId === note.id;
               const cardBg = note.color && note.color !== '#FFFFFF' ? note.color : undefined;
 

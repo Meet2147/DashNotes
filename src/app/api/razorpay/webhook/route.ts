@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
   }
 
   const event = JSON.parse(body);
-  const supabase = await createClient();
 
   switch (event.event) {
     case 'subscription.activated':
@@ -25,12 +24,10 @@ export async function POST(req: NextRequest) {
       const sub = event.payload.subscription.entity;
       const userId = sub.notes?.user_id;
       if (userId) {
-        await supabase.from('user_plans').upsert({
-          user_id: userId,
-          plan: 'pro',
-          monthly_limit: 10000,
-          razorpay_subscription_id: sub.id,
-          updated_at: new Date().toISOString(),
+        await prisma.userPlan.upsert({
+          where: { userId },
+          update: { plan: 'pro', monthlyLimit: 10000, razorpaySubscriptionId: sub.id },
+          create: { userId, plan: 'pro', monthlyLimit: 10000, razorpaySubscriptionId: sub.id },
         });
       }
       break;
@@ -41,11 +38,10 @@ export async function POST(req: NextRequest) {
       const sub = event.payload.subscription.entity;
       const userId = sub.notes?.user_id;
       if (userId) {
-        await supabase.from('user_plans').update({
-          plan: 'free',
-          monthly_limit: 20,
-          updated_at: new Date().toISOString(),
-        }).eq('user_id', userId);
+        await prisma.userPlan.update({
+          where: { userId },
+          data: { plan: 'free', monthlyLimit: 20 },
+        });
       }
       break;
     }
