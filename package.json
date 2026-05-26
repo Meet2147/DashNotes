@@ -10,7 +10,6 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.98.0",
     "@auth/prisma-adapter": "^2.11.2",
     "@blocknote/core": "^0.51.2",
     "@blocknote/mantine": "^0.51.2",
@@ -36,6 +35,7 @@
     "next": "16.2.6",
     "next-auth": "^4.24.14",
     "next-pwa": "^5.6.0",
+    "openai": "^6.39.0",
     "prisma": "5.22.0",
     "razorpay": "^2.9.6",
     "react": "19.2.4",

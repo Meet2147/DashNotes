@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { anthropic } from '@/lib/anthropic';
+import { getPerplexity, FAST_MODEL } from '@/lib/perplexity';
 import { canUseAI, incrementUsage } from '@/lib/usage';
 
 export const runtime = 'nodejs';
@@ -12,28 +12,23 @@ export async function POST(req: NextRequest) {
   const userId = session.user.id;
 
   const allowed = await canUseAI(userId);
-  if (!allowed) {
-    return NextResponse.json({ error: 'limit_reached' }, { status: 429 });
-  }
+  if (!allowed) return NextResponse.json({ error: 'limit_reached' }, { status: 429 });
 
   const { noteContent } = await req.json();
-
-  if (!noteContent || noteContent.trim().length === 0) {
-    return NextResponse.json({ error: 'No note content provided' }, { status: 400 });
-  }
+  if (!noteContent?.trim()) return NextResponse.json({ error: 'No note content provided' }, { status: 400 });
 
   await incrementUsage(userId, 'quiz');
 
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5',
+  const response = await getPerplexity().chat.completions.create({
+    model: FAST_MODEL,
     max_tokens: 3000,
     messages: [
       {
         role: 'user',
-        content: `Generate 8-10 multiple choice quiz questions from these notes. Return ONLY valid JSON array with no other text:
+        content: `Generate 8-10 multiple choice quiz questions from these notes. Return ONLY a valid JSON array, no explanation:
 [{"question": "...", "options": ["A", "B", "C", "D"], "correct": 0, "explanation": "..."}]
 
-The "correct" field is the 0-based index of the correct option in the "options" array.
+"correct" is the 0-based index of the correct option.
 
 Notes:
 ${noteContent}`,
@@ -41,18 +36,11 @@ ${noteContent}`,
     ],
   });
 
-  const textBlock = response.content.find((b) => b.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
-    return NextResponse.json({ error: 'Failed to generate quiz' }, { status: 500 });
-  }
-
+  const text = response.choices[0]?.message?.content ?? '';
   try {
-    const jsonMatch = textBlock.text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      return NextResponse.json({ error: 'Invalid response format' }, { status: 500 });
-    }
-    const quiz = JSON.parse(jsonMatch[0]);
-    return NextResponse.json(quiz);
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) return NextResponse.json({ error: 'Invalid response format' }, { status: 500 });
+    return NextResponse.json(JSON.parse(match[0]));
   } catch {
     return NextResponse.json({ error: 'Failed to parse quiz' }, { status: 500 });
   }

@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { execFileSync } from 'child_process';
 import path from 'path';
 
