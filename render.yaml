@@ -16,9 +16,16 @@ services:
       - key: PORT
         value: 3000
       - key: DATABASE_URL
-        value: file:/data/dashnotes.db
+        fromDatabase:
+          name: dashnotes-db
+          property: connectionString
       - key: NEXTAUTH_URL
         fromService:
           type: web
           name: dashnotes
           property: host
+
+databases:
+  - name: dashnotes-db
+    region: oregon
+    plan: free
