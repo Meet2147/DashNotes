@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 
-export const FAST_MODEL = 'llama-3.1-8b-instruct';
-export const CHAT_MODEL = 'llama-3.1-sonar-small-128k-online';
+export const FAST_MODEL = 'sonar';        // fast, good for JSON tasks
+export const CHAT_MODEL = 'sonar-pro';    // more capable, web-aware, for Feynman chat
 
 export function getPerplexity() {
   return new OpenAI({
