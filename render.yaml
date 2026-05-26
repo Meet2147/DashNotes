@@ -4,8 +4,8 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npx prisma db push --accept-data-loss && node .next/standalone/server.js
+    buildCommand: npm install && node_modules/.bin/prisma generate && npm run build
+    startCommand: sh start.sh
     envVars:
       - key: NODE_VERSION
         value: 22.22.2
