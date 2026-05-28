@@ -23,6 +23,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { signOut, useSession } from 'next-auth/react';
 import { Collection } from '@/types';
+import DashNotesLogo from './DashNotesLogo';
 import InviteModal from './InviteModal';
 
 function NavItem({
@@ -178,12 +179,12 @@ export default function Sidebar() {
         <div className={`flex flex-col h-full min-w-0 ${sidebarOpen ? 'min-w-[256px]' : 'min-w-0 md:min-w-[64px]'}`}>
           {/* Header */}
           <div className={`flex items-center gap-3 px-4 py-5 ${sidebarOpen ? '' : 'md:justify-center'}`}>
-            <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
-              <BookOpen size={15} className="text-white" />
+            <div className="flex-shrink-0">
+              <DashNotesLogo size={32} />
             </div>
             {sidebarOpen && (
               <span className="font-bold text-lg text-gray-900 tracking-tight">
-                OpenNote
+                DashNotes
               </span>
             )}
             {sidebarOpen && (

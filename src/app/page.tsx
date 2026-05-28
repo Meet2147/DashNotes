@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Sparkles, LayoutGrid, ArrowRight, Brain, Zap } from 'lucide-react';
+import { Sparkles, LayoutGrid, ArrowRight, Brain, Zap } from 'lucide-react';
+import DashNotesLogo from '@/components/DashNotesLogo';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -32,11 +33,9 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-violet-950 to-gray-950 text-white">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center">
-            <BookOpen size={16} className="text-white" />
-          </div>
-          <span className="font-bold text-lg tracking-tight">OpenNote</span>
+        <div className="flex items-center gap-2.5">
+          <DashNotesLogo size={34} />
+          <span className="font-bold text-lg tracking-tight">DashNotes</span>
         </div>
         <div className="flex items-center gap-3">
           <Link

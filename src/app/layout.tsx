@@ -6,13 +6,19 @@ import SessionProviderWrapper from './SessionProviderWrapper';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'OpenNote – AI-Powered Learning Notebook',
-  description: 'A Notion-style block editor with Claude AI tutor built in. Learn smarter with Feynman AI, flashcards, and quizzes.',
+  title: 'DashNotes – AI-Powered Learning Notebook',
+  description: 'A Notion-style block editor meets Aria AI tutor. Write notes, generate flashcards, take quizzes — learn smarter with DashNotes.',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/icon-192.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'OpenNote',
+    title: 'DashNotes',
   },
 };
 
@@ -27,7 +33,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/icon-192.svg" />
       </head>
       <body className="h-screen overflow-hidden antialiased font-sans bg-white text-gray-900">
         <SessionProviderWrapper>

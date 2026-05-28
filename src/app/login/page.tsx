@@ -3,8 +3,9 @@
 import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BookOpen, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import DashNotesLogo from '@/components/DashNotesLogo';
 
 type Tab = 'signin' | 'signup';
 
@@ -66,10 +67,8 @@ function LoginForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-violet-600 flex items-center justify-center">
-              <BookOpen size={22} className="text-white" />
-            </div>
-            <span className="text-2xl font-bold text-white tracking-tight">OpenNote</span>
+            <DashNotesLogo size={52} />
+            <span className="text-2xl font-bold text-white tracking-tight">DashNotes</span>
           </Link>
           <p className="text-gray-400 mt-2 text-sm">
             {tab === 'signin' ? 'Welcome back' : 'Create your free account'}
