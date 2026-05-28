@@ -13,7 +13,7 @@
       <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#1E0048" flood-opacity="0.45"/>
     </filter>
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feGaussianBlur stdDeviation="6" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
@@ -23,32 +23,20 @@
   <!-- Top shine -->
   <rect width="512" height="256" rx="114" fill="url(#shine)"/>
 
-  <!-- Document / page -->
+  <!-- Paper plane (scaled 16x from 32x32: nose→448,208 top→48,48 fold→144,208 bottom→48,368) -->
   <g filter="url(#shadow)">
-    <path d="M 142,92 L 310,92 L 310,92 L 372,154 L 372,424
-             Q 372,434 362,434 L 150,434 Q 140,434 140,424 L 140,102 Q 140,92 150,92 Z"
-          fill="white"/>
-    <!-- Folded corner -->
-    <path d="M 310,92 L 372,154 L 310,154 Z" fill="#C4B5FD"/>
-    <path d="M 310,154 L 372,154 L 310,92 Z" fill="#8B5CF6" opacity="0.3"/>
+    <!-- Top wing -->
+    <path d="M 448,208 L 48,48 L 144,208 Z" fill="white"/>
+    <!-- Bottom wing (slightly dimmer) -->
+    <path d="M 448,208 L 144,208 L 48,368 Z" fill="white" opacity="0.88"/>
+    <!-- Lower fold flap -->
+    <path d="M 144,208 L 176,304 L 48,368 Z" fill="#C4B5FD" opacity="0.75"/>
   </g>
 
-  <!-- Note lines -->
-  <rect x="172" y="200" width="156" height="18" rx="9"  fill="#7C3AED" opacity="0.18"/>
-  <rect x="172" y="244" width="128" height="18" rx="9"  fill="#7C3AED" opacity="0.14"/>
-  <rect x="172" y="288" width="144" height="18" rx="9"  fill="#7C3AED" opacity="0.14"/>
-  <rect x="172" y="332" width="108" height="18" rx="9"  fill="#7C3AED" opacity="0.10"/>
-
-  <!-- Aria AI sparkle — 4-pointed star -->
-  <g filter="url(#glow)" transform="translate(314,364)">
-    <circle r="46" fill="#06B6D4" opacity="0.12"/>
-    <path d="M0,-38 C5,-10 10,-5 38,0 C10,5 5,10 0,38 C-5,10 -10,5 -38,0 C-10,-5 -5,-10 0,-38 Z"
-          fill="#22D3EE"/>
-    <circle r="7" fill="white"/>
+  <!-- Accent sparkle trail -->
+  <g filter="url(#glow)">
+    <circle cx="390" cy="336" r="12"  fill="#A78BFA" opacity="0.55"/>
+    <circle cx="426" cy="374" r="8"   fill="#C4B5FD" opacity="0.40"/>
+    <circle cx="356" cy="392" r="6"   fill="#DDD6FE" opacity="0.30"/>
   </g>
-
-  <!-- Accent dots -->
-  <circle cx="382" cy="330" r="8"  fill="#67E8F9" opacity="0.7"/>
-  <circle cx="292" cy="404" r="7"  fill="#A5F3FC" opacity="0.5"/>
-  <circle cx="396" cy="392" r="5"  fill="#67E8F9" opacity="0.4"/>
 </svg>
