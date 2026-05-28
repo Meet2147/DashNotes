@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name } = await req.json();
+    const { email, password, name, referralCode } = await req.json();
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
@@ -31,6 +31,24 @@ export async function POST(req: NextRequest) {
     });
 
     await prisma.userPlan.create({ data: { userId: user.id } });
+
+    // Generate a unique referral code for the new user
+    const { nanoid } = await import('nanoid');
+    const newCode = nanoid(8);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { referralCode: newCode, referredBy: referralCode ?? null },
+    });
+
+    // Track referral if referralCode was provided
+    if (referralCode) {
+      const referrer = await prisma.user.findUnique({ where: { referralCode } });
+      if (referrer) {
+        await prisma.referral.create({
+          data: { referrerId: referrer.id, referredId: user.id },
+        });
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

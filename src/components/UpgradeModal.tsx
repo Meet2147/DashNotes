@@ -26,16 +26,19 @@ function loadRazorpay(): Promise<boolean> {
 }
 
 const PRO_FEATURES = [
-  'Unlimited AI requests (Feynman tutor)',
+  'Unlimited AI requests (Aria tutor)',
   'Generate flashcard decks instantly',
   'Quiz yourself on any note',
   'AI summaries on demand',
   'Priority support',
 ];
 
+type PlanType = 'monthly' | 'annual';
+
 export default function UpgradeModal({ onClose, userEmail }: UpgradeModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [planType, setPlanType] = useState<PlanType>('monthly');
 
   const handleUpgrade = async () => {
     setLoading(true);
@@ -45,7 +48,11 @@ export default function UpgradeModal({ onClose, userEmail }: UpgradeModalProps) 
       const ok = await loadRazorpay();
       if (!ok) { setError('Failed to load payment. Check your connection.'); setLoading(false); return; }
 
-      const res = await fetch('/api/razorpay/subscribe', { method: 'POST' });
+      const res = await fetch('/api/razorpay/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planType }),
+      });
       if (!res.ok) {
         const d = await res.json();
         setError(d.error ?? 'Failed to create subscription.');
@@ -54,12 +61,15 @@ export default function UpgradeModal({ onClose, userEmail }: UpgradeModalProps) 
       }
 
       const { subscription_id } = await res.json();
+      const description = planType === 'annual'
+        ? 'DashNotes Pro — Annual'
+        : 'DashNotes Pro — Monthly';
 
       const rzp = new window.Razorpay({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         subscription_id,
         name: 'DashNotes',
-        description: 'DashNotes Pro — Monthly',
+        description,
         image: '/icon-192.png',
         prefill: { email: userEmail },
         theme: { color: '#7C3AED' },
@@ -106,9 +116,45 @@ export default function UpgradeModal({ onClose, userEmail }: UpgradeModalProps) 
           <h2 className="text-2xl font-bold mb-1">Unlock unlimited AI</h2>
           <p className="text-violet-200 text-sm">You&apos;ve used all 20 free AI requests this month.</p>
 
-          <div className="mt-4 flex items-baseline gap-1">
-            <span className="text-4xl font-bold">₹199</span>
-            <span className="text-violet-200">/month</span>
+          {/* Plan toggle */}
+          <div className="mt-4 flex rounded-xl bg-white/10 p-1 gap-1">
+            <button
+              onClick={() => setPlanType('monthly')}
+              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                planType === 'monthly'
+                  ? 'bg-white text-violet-700'
+                  : 'text-violet-200 hover:text-white'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setPlanType('annual')}
+              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                planType === 'annual'
+                  ? 'bg-white text-violet-700'
+                  : 'text-violet-200 hover:text-white'
+              }`}
+            >
+              Annual
+              <span className="text-xs bg-green-500 text-white px-1.5 py-0.5 rounded-full font-semibold">
+                Save 37%
+              </span>
+            </button>
+          </div>
+
+          <div className="mt-3 flex items-baseline gap-1">
+            {planType === 'monthly' ? (
+              <>
+                <span className="text-4xl font-bold">₹199</span>
+                <span className="text-violet-200">/month</span>
+              </>
+            ) : (
+              <>
+                <span className="text-4xl font-bold">₹1,499</span>
+                <span className="text-violet-200">/year</span>
+              </>
+            )}
           </div>
         </div>
 

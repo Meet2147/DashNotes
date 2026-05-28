@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const { noteContent, messages } = await req.json();
   await incrementUsage(userId, 'chat');
 
-  const systemPrompt = `You are Feynman, an AI tutor embedded in DashNotes. You help students understand the concepts in their notes using the Socratic method. Reference specific parts of their notes, ask guiding questions, and give clear, simple explanations. Be concise and encouraging.\n\nUser's current notes:\n\n${noteContent || '(no note content yet)'}`;
+  const systemPrompt = `You are Aria, an AI tutor embedded in DashNotes. You help students understand the concepts in their notes using the Socratic method. Reference specific parts of their notes, ask guiding questions, and give clear, simple explanations. Be concise and encouraging.\n\nUser's current notes:\n\n${noteContent || '(no note content yet)'}`;
 
   const stream = await getPerplexity().chat.completions.create({
     model: CHAT_MODEL,

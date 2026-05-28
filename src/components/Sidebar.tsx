@@ -16,10 +16,14 @@ import {
   PanelLeft,
   LogOut,
   User,
+  Trash2,
+  Users,
+  MessageCircle,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { signOut, useSession } from 'next-auth/react';
 import { Collection } from '@/types';
+import InviteModal from './InviteModal';
 
 function NavItem({
   icon,
@@ -81,6 +85,7 @@ export default function Sidebar() {
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionColor, setNewCollectionColor] = useState(COLLECTION_COLORS[0]);
   const [darkMode, setDarkMode] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   const loadCollections = useCallback(async () => {
     const res = await fetch('/api/collections');
@@ -328,6 +333,31 @@ export default function Sidebar() {
                 <span className="text-xs text-gray-500 truncate flex-1">{userEmail}</span>
               </div>
             )}
+
+            <NavItem
+              icon={<Trash2 size={16} />}
+              label="Trash"
+              active={view === 'trash'}
+              onClick={() => handleNavClick('trash')}
+              collapsed={!sidebarOpen}
+            />
+
+            <NavItem
+              icon={<Users size={16} />}
+              label="Invite friends"
+              active={false}
+              onClick={() => setInviteModalOpen(true)}
+              collapsed={!sidebarOpen}
+            />
+
+            <NavItem
+              icon={<MessageCircle size={16} />}
+              label="Join Discord"
+              active={false}
+              onClick={() => window.open('https://discord.gg/dashnotes', '_blank')}
+              collapsed={!sidebarOpen}
+            />
+
             <div className={`flex items-center gap-2 ${sidebarOpen ? '' : 'md:justify-center'}`}>
               <button
                 onClick={toggleDarkMode}
@@ -349,6 +379,10 @@ export default function Sidebar() {
           </div>
         </div>
       </aside>
+
+      {inviteModalOpen && (
+        <InviteModal onClose={() => setInviteModalOpen(false)} />
+      )}
 
       {/* Collection Modal */}
       {collectionModalOpen && (

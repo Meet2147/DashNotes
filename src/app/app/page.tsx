@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import Sidebar from '@/components/Sidebar';
 import NotesList from '@/components/NotesList';
+import TrashView from '@/components/TrashView';
 import AISidebar from '@/components/AISidebar';
 import { Note } from '@/types';
 import { Loader2 } from 'lucide-react';
@@ -19,7 +20,7 @@ const BlockEditor = nextDynamic(() => import('@/components/BlockEditor'), {
 });
 
 export default function AppPage() {
-  const { selectedNoteId, mobilePanel, setMobilePanel } = useAppStore();
+  const { selectedNoteId, mobilePanel, setMobilePanel, view } = useAppStore();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [noteLoading, setNoteLoading] = useState(false);
 
@@ -60,7 +61,7 @@ export default function AppPage() {
           mobilePanel === 'notes' ? 'flex' : 'hidden md:flex'
         }`}
       >
-        <NotesList />
+        {view === 'trash' ? <TrashView /> : <NotesList />}
       </div>
 
       {/* Editor panel */}

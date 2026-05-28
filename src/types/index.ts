@@ -14,6 +14,7 @@ export interface Note {
   pinned: boolean;
   collectionId: string | null;
   collection?: { id: string; name: string; color: string } | null;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -29,5 +29,14 @@ export async function POST(req: NextRequest) {
     create: { userId, plan: 'pro', monthlyLimit: 10000, razorpaySubscriptionId: razorpay_subscription_id },
   });
 
+  // Mark referral as converted (if this user was referred)
+  const userRecord = await prisma.user.findUnique({ where: { id: userId }, select: { referredBy: true } });
+  if (userRecord?.referredBy) {
+    await prisma.referral.updateMany({
+      where: { referredId: userId, converted: false },
+      data: { converted: true, convertedAt: new Date() },
+    });
+  }
+
   return NextResponse.json({ success: true });
 }

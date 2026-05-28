@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ViewType = 'all' | 'collection' | 'tags';
+export type ViewType = 'all' | 'collection' | 'tags' | 'trash';
 export type MobilePanel = 'sidebar' | 'notes' | 'editor';
 export type SortBy = 'updatedAt' | 'createdAt' | 'title';
 

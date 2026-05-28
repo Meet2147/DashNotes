@@ -48,12 +48,15 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
+  referralCode  String?   @unique
+  referredBy    String?   // referral code used at signup
   accounts      Account[]
   sessions      Session[]
   notes         Note[]
   collections   Collection[]
   aiUsage       AiUsage[]
   plan          UserPlan?
+  referrals     Referral[] @relation("ReferrerRelation")
   createdAt     DateTime  @default(now())
 }
 
@@ -76,6 +79,7 @@ model Note {
   pinned       Boolean     @default(false)
   userId       String
   collectionId String?
+  deletedAt    DateTime?
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   createdAt    DateTime    @default(now())
@@ -97,4 +101,16 @@ model UserPlan {
   razorpaySubscriptionId String?
   user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   updatedAt              DateTime @updatedAt
+}
+
+model Referral {
+  id          String    @id @default(cuid())
+  referrerId  String
+  referredId  String    @unique
+  converted   Boolean   @default(false)
+  paidOut     Boolean   @default(false)
+  reward      Int       @default(100)
+  createdAt   DateTime  @default(now())
+  convertedAt DateTime?
+  referrer    User      @relation("ReferrerRelation", fields: [referrerId], references: [id], onDelete: Cascade)
 }

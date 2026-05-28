@@ -259,7 +259,7 @@ export default function AISidebar({ note }: AISidebarProps) {
             <div className="w-7 h-7 rounded-lg bg-cyan-500 flex items-center justify-center">
               <Sparkles size={14} className="text-white" />
             </div>
-            <span className="font-semibold text-gray-900 text-sm">Ask Feynman</span>
+            <span className="font-semibold text-gray-900 text-sm">Ask Aria</span>
           </div>
           <button
             onClick={toggleAiSidebar}
@@ -318,7 +318,7 @@ export default function AISidebar({ note }: AISidebarProps) {
               <div className="w-12 h-12 rounded-2xl bg-cyan-100 flex items-center justify-center mx-auto mb-3">
                 <Sparkles size={20} className="text-cyan-500" />
               </div>
-              <p className="text-sm font-medium text-gray-700 mb-1">Hi! I&apos;m Feynman</p>
+              <p className="text-sm font-medium text-gray-700 mb-1">Hi! I&apos;m Aria</p>
               <p className="text-xs text-gray-400 max-w-[200px] mx-auto">
                 Ask me anything about your notes. I&apos;ll help you understand using the Socratic method.
               </p>
