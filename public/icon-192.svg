@@ -9,14 +9,15 @@
       <stop offset="0%" stop-color="white" stop-opacity="0.13"/>
       <stop offset="100%" stop-color="white" stop-opacity="0"/>
     </linearGradient>
-    <!-- Dense diagonal hatch for lower fold (matches reference hatching direction) -->
+    <!-- Dense close diagonal hatch (matches reference hatching) -->
     <pattern id="hatch" width="5" height="5"
-             patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+             patternUnits="userSpaceOnUse" patternTransform="rotate(-50)">
       <line x1="0" y1="0" x2="0" y2="5"
-            stroke="#A78BFA" stroke-width="1" opacity="0.65"/>
+            stroke="#A78BFA" stroke-width="1.1" opacity="0.7"/>
     </pattern>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#1E0048" flood-opacity="0.4"/>
+      <feDropShadow dx="0" dy="5" stdDeviation="7"
+                    flood-color="#1E0048" flood-opacity="0.4"/>
     </filter>
     <clipPath id="clip">
       <rect width="192" height="192" rx="44"/>
@@ -27,34 +28,46 @@
   <rect width="192" height="96"  rx="44" fill="url(#shine)"/>
 
   <g clip-path="url(#clip)">
-    <!-- Plane — vertices scaled 6× from 32×32 design:
-         N=(162,24)  TL=(48,60)  B=(120,102)  T=(78,132) -->
+    <!--
+      Plane vertices scaled 6× from 32×32:
+        N  = (162, 30)   nose
+        UL = ( 42, 24)   upper-left tip
+        FJ = (132, 96)   fold junction
+        BL = ( 66,150)   tail
+    -->
     <g filter="url(#shadow)">
-      <!-- Upper wing (white) -->
-      <path d="M 162,24 L 48,60 L 120,102 Z"
+      <!-- Upper wing -->
+      <path d="M 162,30 L 42,24 L 132,96 Z"
             fill="white" stroke="#A78BFA" stroke-width="3.5" stroke-linejoin="round"/>
-      <!-- Lower fold (light lavender base) -->
-      <path d="M 162,24 L 120,102 L 78,132 Z"
-            fill="#EDE9FE" stroke="#A78BFA" stroke-width="3.5" stroke-linejoin="round"/>
+      <!-- Lower fold base -->
+      <path d="M 162,30 L 132,96 L 66,150 Z"
+            fill="#C4B5FD" opacity="0.6" stroke="#A78BFA" stroke-width="3.5" stroke-linejoin="round"/>
       <!-- Rear flap -->
-      <path d="M 48,60 L 120,102 L 78,132 Z"
-            fill="#C4B5FD" stroke="#A78BFA" stroke-width="3.5" stroke-linejoin="round"/>
+      <path d="M 42,24 L 132,96 L 66,150 Z"
+            fill="#7C3AED" opacity="0.45" stroke="#A78BFA" stroke-width="3.5" stroke-linejoin="round"/>
     </g>
-    <!-- Hatch overlay on lower fold only -->
-    <path d="M 162,24 L 120,102 L 78,132 Z" fill="url(#hatch)"/>
-    <!-- Fold crease line -->
-    <line x1="162" y1="24" x2="120" y2="102"
-          stroke="#A78BFA" stroke-width="2" opacity="0.65"/>
 
-    <!-- Dashed trail: curves from tail, loops, exits lower-left -->
-    <path d="M 80,130
-             C 72,136 62,134 55,141
-             C 48,148 36,148 34,157
-             C 32,166 38,173 47,171
-             C 56,169 59,160 53,154
-             C 47,148 38,150 34,157
-             C 30,164 22,172 10,176"
+    <!-- Dense diagonal hatch over lower fold (matches reference image) -->
+    <path d="M 162,30 L 132,96 L 66,150 Z" fill="url(#hatch)"/>
+
+    <!-- Fold crease line -->
+    <line x1="162" y1="30" x2="132" y2="96"
+          stroke="#C4B5FD" stroke-width="2.5" opacity="0.9"/>
+
+    <!--
+      Dashed loop trail — one continuous path.
+      Exits from near tail (66,150), sweeps lower-left,
+      makes a full loop (path crosses itself ≈ circle at 40,168),
+      then continues to lower-left corner.
+    -->
+    <path d="M 68,146
+             C 60,154 52,156 46,163
+             C 40,170 30,170 28,178
+             C 26,186 32,192 40,190
+             C 48,188 52,180 48,172
+             C 44,164 34,164 28,172
+             C 22,180 14,184 4,186"
           stroke="#A78BFA" stroke-width="2.8" stroke-dasharray="6,7"
-          fill="none" opacity="0.6" stroke-linecap="round"/>
+          fill="none" opacity="0.65" stroke-linecap="round"/>
   </g>
 </svg>

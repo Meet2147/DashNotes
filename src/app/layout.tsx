@@ -33,8 +33,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=4" />
-        <link rel="apple-touch-icon" href="/icon-192.svg?v=4" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=5" />
+        <link rel="apple-touch-icon" href="/icon-192.svg?v=5" />
       </head>
       <body className="h-screen overflow-hidden antialiased font-sans bg-white text-gray-900">
         <SessionProviderWrapper>
