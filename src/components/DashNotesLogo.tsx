@@ -15,16 +15,17 @@ export default function DashNotesLogo({ size = 32 }: { size?: number }) {
       </defs>
       <rect width="32" height="32" rx="7" fill="url(#dnbg)" />
       {/* Upper wing — large white face */}
-      <path d="M 28,5 L 4,12 L 18,19 Z"
-            fill="white" stroke="#A78BFA" strokeWidth="1" strokeLinejoin="round" />
-      {/* Lower fold — light lavender with hatching suggestion */}
-      <path d="M 28,5 L 18,19 L 8,26 Z"
-            fill="#EDE9FE" stroke="#A78BFA" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M 27,4 L 8,10 L 20,17 Z"
+            fill="white" stroke="#A78BFA" strokeWidth="1.1" strokeLinejoin="round" />
+      {/* Lower fold — light lavender */}
+      <path d="M 27,4 L 20,17 L 13,22 Z"
+            fill="#EDE9FE" stroke="#A78BFA" strokeWidth="1.1" strokeLinejoin="round" />
       {/* Rear flap */}
-      <path d="M 4,12 L 18,19 L 8,26 Z"
-            fill="#C4B5FD" stroke="#A78BFA" strokeWidth="1" strokeLinejoin="round" />
-      {/* Fold crease line */}
-      <line x1="28" y1="5" x2="18" y2="19" stroke="#A78BFA" strokeWidth="0.7" opacity="0.6" />
+      <path d="M 8,10 L 20,17 L 13,22 Z"
+            fill="#C4B5FD" stroke="#A78BFA" strokeWidth="1.1" strokeLinejoin="round" />
+      {/* Fold crease (nose → junction) */}
+      <line x1="27" y1="4" x2="20" y2="17"
+            stroke="#A78BFA" strokeWidth="0.7" opacity="0.7" />
     </svg>
   );
 }
