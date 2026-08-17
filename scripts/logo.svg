@@ -1,5 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="192" height="192">
-  
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="1024" height="1024">
+  <!--
+    Canonical DashNotes mark (fountain-pen nib on a neumorphic tile).
+    Rendered to: public/favicon.svg (inlined), public/icon-*.png, macos/AppIcon.iconset.
+    Keep in sync with src/components/DashNotesLogo.tsx.
+  -->
   <defs>
     <linearGradient id="dn-tile" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#F1F3FA"/>

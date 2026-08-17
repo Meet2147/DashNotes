@@ -1,70 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="512" height="512">
+  
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#2E1065"/>
-      <stop offset="60%" stop-color="#6D28D9"/>
-      <stop offset="100%" stop-color="#4F46E5"/>
+    <linearGradient id="dn-tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F1F3FA"/>
+      <stop offset="100%" stop-color="#DDE1EF"/>
     </linearGradient>
-    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="white" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    <linearGradient id="dn-nib" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#5B21B6"/>
     </linearGradient>
-    <!-- Dense hatch scaled for 512 (same visual density as 192) -->
-    <pattern id="hatch" width="13" height="13"
-             patternUnits="userSpaceOnUse" patternTransform="rotate(-50)">
-      <line x1="0" y1="0" x2="0" y2="13"
-            stroke="#A78BFA" stroke-width="3" opacity="0.7"/>
-    </pattern>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="20"
-                    flood-color="#1E0048" flood-opacity="0.45"/>
+    <radialGradient id="dn-well" cx="0.35" cy="0.3" r="1">
+      <stop offset="0%" stop-color="#D3D8E8"/>
+      <stop offset="100%" stop-color="#C4CADD"/>
+    </radialGradient>
+    <filter id="dn-soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="-4" dy="-4" stdDeviation="5" flood-color="#FFFFFF" flood-opacity="0.9"/>
+      <feDropShadow dx="5" dy="6" stdDeviation="6" flood-color="#AEB6CC" flood-opacity="0.55"/>
     </filter>
-    <clipPath id="clip">
-      <rect width="512" height="512" rx="114"/>
-    </clipPath>
+    <filter id="dn-nib-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#3B1D7A" flood-opacity="0.35"/>
+    </filter>
   </defs>
-
-  <rect width="512" height="512" rx="114" fill="url(#bg)"/>
-  <rect width="512" height="256" rx="114" fill="url(#shine)"/>
-
-  <g clip-path="url(#clip)">
-    <!--
-      Plane vertices scaled 16× from 32×32:
-        N  = (432,  80)  nose
-        UL = (112,  64)  upper-left tip
-        FJ = (352, 256)  fold junction
-        BL = (176, 400)  tail
-    -->
-    <g filter="url(#shadow)">
-      <!-- Upper wing -->
-      <path d="M 432,80 L 112,64 L 352,256 Z"
-            fill="white" stroke="#A78BFA" stroke-width="9" stroke-linejoin="round"/>
-      <!-- Lower fold base -->
-      <path d="M 432,80 L 352,256 L 176,400 Z"
-            fill="#C4B5FD" opacity="0.6" stroke="#A78BFA" stroke-width="9" stroke-linejoin="round"/>
-      <!-- Rear flap -->
-      <path d="M 112,64 L 352,256 L 176,400 Z"
-            fill="#7C3AED" opacity="0.45" stroke="#A78BFA" stroke-width="9" stroke-linejoin="round"/>
-    </g>
-
-    <!-- Dense diagonal hatch over lower fold -->
-    <path d="M 432,80 L 352,256 L 176,400 Z" fill="url(#hatch)"/>
-
-    <!-- Fold crease line -->
-    <line x1="432" y1="80" x2="352" y2="256"
-          stroke="#C4B5FD" stroke-width="6.5" opacity="0.9"/>
-
-    <!--
-      Dashed loop trail scaled ~2.67× from 192 trail.
-    -->
-    <path d="M 182,389
-             C 160,411 139,416 123,435
-             C 107,454 80,454 75,475
-             C 70,496 85,512 107,507
-             C 129,502 139,480 128,459
-             C 117,438 91,438 75,459
-             C 59,480 37,491 11,496"
-          stroke="#A78BFA" stroke-width="7.5" stroke-dasharray="16,18"
-          fill="none" opacity="0.65" stroke-linecap="round"/>
+  <rect x="8" y="8" width="112" height="112" rx="30" fill="url(#dn-tile)" filter="url(#dn-soft)"/>
+  <circle cx="64" cy="64" r="40" fill="url(#dn-well)"/>
+  <circle cx="64" cy="64" r="40" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="1.5"/>
+  <g filter="url(#dn-nib-shadow)">
+    <path d="M64 104 C 70 96 86 82 86 60 C 86 44 80 34 76 30 L 52 30 C 48 34 42 44 42 60 C 42 82 58 96 64 104 Z" fill="url(#dn-nib)"/>
+    <circle cx="64" cy="54" r="7" fill="#EDEFF7"/>
+    <line x1="64" y1="62" x2="64" y2="99" stroke="#EDEFF7" stroke-width="3" stroke-linecap="round"/>
   </g>
 </svg>

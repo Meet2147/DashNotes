@@ -18,3 +18,49 @@
 .dark .bn-container {
   color-scheme: dark;
 }
+
+/* ---- Neumorphic (soft-UI) primitives ------------------------------------
+   Light source top-left: raised surfaces pair a white top-left glow with a
+   slate bottom-right shade; sunken ones invert the pair as insets. */
+.neu-bg {
+  background: #E8EBF4;
+}
+.neu-surface {
+  background: linear-gradient(145deg, #EEF1F9, #E2E6F0);
+  box-shadow:
+    -10px -10px 24px rgba(255, 255, 255, 0.9),
+    12px 14px 28px rgba(163, 171, 196, 0.5);
+}
+.neu-inset {
+  background: #E4E7F1;
+  box-shadow:
+    inset 4px 4px 9px rgba(163, 171, 196, 0.45),
+    inset -4px -4px 9px rgba(255, 255, 255, 0.95);
+}
+.neu-raised {
+  background: linear-gradient(145deg, #EEF1F9, #E0E4EF);
+  box-shadow:
+    -5px -5px 12px rgba(255, 255, 255, 0.9),
+    6px 7px 14px rgba(163, 171, 196, 0.5);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.neu-raised:active {
+  box-shadow:
+    inset 3px 3px 7px rgba(163, 171, 196, 0.5),
+    inset -3px -3px 7px rgba(255, 255, 255, 0.9);
+  transform: translateY(1px);
+}
+.neu-primary {
+  background: linear-gradient(145deg, #8B5CF6, #6D28D9);
+  box-shadow:
+    -4px -4px 12px rgba(255, 255, 255, 0.7),
+    6px 8px 16px rgba(109, 40, 217, 0.38);
+  transition: box-shadow 0.15s ease, transform 0.15s ease, filter 0.15s ease;
+}
+.neu-primary:hover { filter: brightness(1.06); }
+.neu-primary:active {
+  transform: translateY(1px);
+  box-shadow:
+    -2px -2px 6px rgba(255, 255, 255, 0.5),
+    3px 4px 8px rgba(109, 40, 217, 0.3);
+}
