@@ -492,6 +492,7 @@ export default function HandwritingStudio({ noteId }: HandwritingStudioProps) {
                   addSamples(glyphs);
                   setStep('review');
                 }}
+                onImported={addSamples}
               />
             )}
           </div>
@@ -514,7 +515,12 @@ export default function HandwritingStudio({ noteId }: HandwritingStudioProps) {
           </div>
 
           <div className="rounded-2xl border border-gray-200 p-5">
-            <GlyphReview glyphs={draft} onReplace={replaceSample} onRemove={removeChar} />
+            <GlyphReview
+              glyphs={draft}
+              onReplace={replaceSample}
+              onRemove={removeChar}
+              onClearAll={() => setDraft({})}
+            />
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
