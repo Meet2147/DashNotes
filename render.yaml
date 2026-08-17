@@ -32,8 +32,10 @@ services:
           type: web
           name: dashnotes
           property: host
-      # Shared demo account on /login for testing. Set to false before real users.
-      - key: NEXT_PUBLIC_ENABLE_DEMO_LOGIN
+      # Shared demo account on /login for testing. Read at runtime (NOT a
+      # NEXT_PUBLIC_ var, which would be frozen into the bundle at build time).
+      # Set to false before the app has real users.
+      - key: ENABLE_DEMO_LOGIN
         value: true
       # Set in the Render dashboard; the AI features return 500 without it.
       - key: PERPLEXITY_API_KEY
