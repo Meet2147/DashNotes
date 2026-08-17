@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { describeDbError } from '@/lib/dbHealth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,12 +53,24 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
+    const described = describeDbError(err);
+    console.error('[signup error]', described.code, described.message);
+
+    // Connection-level problems are operational, not sensitive, and hiding them
+    // behind "check the server logs" is what made this hard to diagnose. Name
+    // them; fall back to a generic message for anything else in production.
+    if (described.code.startsWith('P1') || described.code === 'P2021') {
+      return NextResponse.json(
+        { error: `${described.message} See /api/health for details.` },
+        { status: 503 }
+      );
+    }
+
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[signup error]', message);
-    // Surface a readable error in development, generic in production
-    const body = process.env.NODE_ENV === 'development'
-      ? { error: message }
-      : { error: 'Signup failed. Check server logs.' };
+    const body =
+      process.env.NODE_ENV === 'development'
+        ? { error: message }
+        : { error: 'Signup failed. Check /api/health and the server logs.' };
     return NextResponse.json(body, { status: 500 });
   }
 }
