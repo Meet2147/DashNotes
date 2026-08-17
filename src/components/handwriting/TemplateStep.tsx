@@ -13,6 +13,7 @@ import { CHARSET } from '@/lib/handwriting/charset';
 import { canvasToBlob, downloadBlob } from '@/lib/handwriting/pdf';
 import { drawTemplateSheet, printTemplateSheet } from '@/lib/handwriting/template';
 import type { GlyphMap } from '@/lib/handwriting/types';
+import CalligraphrUploader from './CalligraphrUploader';
 import SheetUploader from './SheetUploader';
 
 interface TemplateStepProps {
@@ -89,6 +90,17 @@ export default function TemplateStep({ onExtracted }: TemplateStepProps) {
           is processed on this device and never uploaded.
         </p>
         <SheetUploader onExtracted={onExtracted} />
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 p-5">
+        <div className="text-sm font-bold text-gray-800 mb-1">
+          Already filled in a Calligraphr sheet?
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          You can import it directly instead of writing everything again. The sheet&apos;s own grid
+          is detected, so no corner squares are needed — just a flat scan.
+        </p>
+        <CalligraphrUploader onExtracted={onExtracted} />
       </div>
 
       {error && (

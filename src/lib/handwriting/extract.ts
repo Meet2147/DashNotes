@@ -50,6 +50,14 @@ export interface ExtractionResult {
   missing: string[];
   /** Rectified sheet, handy for showing the user what we actually read. */
   rectified: HTMLCanvasElement;
+  /**
+   * True when what we sliced looks like grid lines rather than handwriting —
+   * the signature of a different template (e.g. a Calligraphr sheet) being fed
+   * to our fixed geometry. Callers should refuse the result rather than let the
+   * user save a profile full of table borders.
+   */
+  suspicious: boolean;
+  suspicionReason?: string;
 }
 
 /** Marker centres in rectified-sheet pixels. */
@@ -219,6 +227,7 @@ export function extractGlyphs(sourceCanvas: HTMLCanvasElement, corners: Point[])
   const glyphs: GlyphMap = {};
   const captured: string[] = [];
   const missing: string[] = [];
+  let throughLines = 0;
 
   for (const cell of templateCells()) {
     const win = cellInkWindow(cell);
@@ -233,12 +242,28 @@ export function extractGlyphs(sourceCanvas: HTMLCanvasElement, corners: Point[])
     if (sample) {
       glyphs[cell.char] = [sample];
       captured.push(cell.char);
+      // Handwriting never spans a whole extraction window; a printed grid line
+      // sliced by our cell positions does.
+      if (sample.wEm * EM_PX > win.w * 0.85 || sample.hEm * EM_PX > win.h * 0.85) {
+        throughLines++;
+      }
     } else {
       missing.push(cell.char);
     }
   }
 
-  return { glyphs, captured, missing, rectified: grayToCanvas(rectified) };
+  const suspicious = captured.length >= 12 && throughLines / captured.length > 0.3;
+
+  return {
+    glyphs,
+    captured,
+    missing,
+    rectified: grayToCanvas(rectified),
+    suspicious,
+    suspicionReason: suspicious
+      ? `${throughLines} of ${captured.length} cells look like sliced grid lines, not handwriting — this is probably not the DashNotes capture sheet.`
+      : undefined,
+  };
 }
 
 /**

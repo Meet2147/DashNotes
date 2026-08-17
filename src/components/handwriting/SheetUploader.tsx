@@ -89,6 +89,15 @@ export default function SheetUploader({ onExtracted }: SheetUploaderProps) {
     await new Promise((r) => setTimeout(r, 40));
     try {
       const out = extractGlyphs(canvas, corners);
+      if (out.suspicious) {
+        // Importing sliced grid lines as letters would poison the profile;
+        // refuse and point at the likely cause instead.
+        setError(
+          `${out.suspicionReason ?? 'This does not look like the DashNotes capture sheet.'} ` +
+            'If this is a Calligraphr sheet, use the Calligraphr importer further down this page.'
+        );
+        return;
+      }
       setResult({ captured: out.captured.length, missing: out.missing });
       onExtracted(out.glyphs, out.captured, out.missing);
     } catch (e) {
