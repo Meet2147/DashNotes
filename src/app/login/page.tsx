@@ -7,6 +7,20 @@ import { Mail, Lock, Loader2, AlertCircle, Play } from 'lucide-react';
 import Link from 'next/link';
 import DashNotesLogo from '@/components/DashNotesLogo';
 import { DEMO_EMAIL, DEMO_PASSWORD } from '@/lib/demo';
+import { DB_ERROR_PREFIX } from '@/lib/dbHealth';
+
+/**
+ * next-auth reports every failed credentials attempt as a 401, so a genuinely
+ * wrong password and an unreachable database arrive identically. auth.ts tags the
+ * latter, letting us name the real problem instead of blaming the password.
+ */
+function describeSignInError(raw: string): string {
+  if (raw.startsWith(DB_ERROR_PREFIX)) {
+    const detail = raw.slice(DB_ERROR_PREFIX.length).replace(/^:\s*/, '');
+    return `${detail || 'The database is unavailable.'} Open /api/health for details — this is not a password problem.`;
+  }
+  return 'Invalid email or password';
+}
 
 type Tab = 'signin' | 'signup';
 
@@ -61,7 +75,7 @@ function LoginForm() {
         redirect: false,
       });
       if (result?.error) {
-        setError('The demo account was prepared but sign-in failed. Check NEXTAUTH_SECRET is set.');
+        setError(describeSignInError(result.error));
         return;
       }
       router.replace('/app');
@@ -82,7 +96,7 @@ function LoginForm() {
       if (tab === 'signin') {
         const result = await signIn('credentials', { email, password, redirect: false });
         if (result?.error) {
-          setError('Invalid email or password');
+          setError(describeSignInError(result.error));
         } else {
           router.replace('/app');
         }
