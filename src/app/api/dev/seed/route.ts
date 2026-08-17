@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { DEMO_EMAIL, DEMO_PASSWORD, demoLoginEnabled } from '@/lib/demo';
 
-// One-time seed endpoint — creates a test account with sample data
-// DELETE this route before going to production with real users
+// Idempotent seed endpoint — creates the shared demo account with sample data.
+// Gated by demoLoginEnabled(); set NEXT_PUBLIC_ENABLE_DEMO_LOGIN=false to close it
+// once the app has real users.
 
-const TEST_EMAIL = 'test@dashnotes.app';
-const TEST_PASSWORD = 'DashNotes@123';
+const TEST_EMAIL = DEMO_EMAIL;
+const TEST_PASSWORD = DEMO_PASSWORD;
 
 const SAMPLE_NOTES = [
   {
@@ -72,6 +74,9 @@ const SAMPLE_NOTES = [
 ];
 
 export async function GET() {
+  if (!demoLoginEnabled()) {
+    return NextResponse.json({ error: 'Demo account is disabled.' }, { status: 403 });
+  }
   try {
     // Check if already seeded
     const existing = await prisma.user.findUnique({ where: { email: TEST_EMAIL } });
