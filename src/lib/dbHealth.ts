@@ -163,7 +163,9 @@ export function describeDatabaseUrl(): {
         present: true,
         style: 'render-external',
         hasSslMode,
-        note: hasSslMode ? undefined : 'External Render URLs normally need ?sslmode=require.',
+        note: hasSslMode
+          ? undefined
+          : 'No sslmode in DATABASE_URL; sslmode=require is applied automatically for render.com hosts.',
       };
     }
     if (host === 'localhost' || host === '127.0.0.1') {
