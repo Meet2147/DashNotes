@@ -15,10 +15,19 @@ services:
         value: 0.0.0.0
       - key: PORT
         value: 3000
+      # Set in the Render dashboard, not bound to a blueprint-declared database.
+      #
+      # This used to be `fromDatabase: name: dashnotes-db`. When that database was
+      # deleted and replaced, the reference went stale: a blueprint sync would
+      # overwrite the working value in the dashboard with a pointer to a database
+      # that no longer exists, and free-tier accounts only get one instance, so
+      # re-declaring it here can also fail the deploy outright.
+      #
+      # Use the database's *External* connection string (the hostname ending in
+      # .oregon-postgres.render.com), unless this service is in the same region as
+      # the database, in which case the internal one is faster.
       - key: DATABASE_URL
-        fromDatabase:
-          name: dashnotes-db
-          property: connectionString
+        sync: false
       # next-auth refuses to start in production without a secret, which took
       # every /api/auth/* route down with a 500. generateValue creates one on
       # first deploy and keeps it stable afterwards — changing it would sign
@@ -41,7 +50,8 @@ services:
       - key: PERPLEXITY_API_KEY
         sync: false
 
-databases:
-  - name: dashnotes-db
-    region: oregon
-    plan: free
+# No `databases:` block on purpose. The original dashnotes-db was deleted and
+# replaced by a database created in the dashboard, so declaring one here would
+# either recreate an unused instance — free accounts allow only one, which fails
+# the deploy — or leave a stale reference for DATABASE_URL to bind to. The
+# database is managed in the dashboard; this service just reads DATABASE_URL.

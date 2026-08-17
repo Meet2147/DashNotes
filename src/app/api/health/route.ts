@@ -39,7 +39,17 @@ export async function GET() {
   if (!env.NEXTAUTH_SECRET) {
     problems.push('NEXTAUTH_SECRET is not set — every /api/auth/* route will return 500.');
   }
-  if (databaseUrl.note) problems.push(databaseUrl.note);
+
+  // The connection-string note is informational — an internal hostname is
+  // perfectly correct when the service sits in the database's region. Promote it
+  // to a problem only when the database is actually unreachable, where it is the
+  // most likely cause. Otherwise a healthy deploy would report itself unhealthy.
+  if (!database.ok && databaseUrl.style === 'render-internal' && databaseUrl.note) {
+    problems.push(databaseUrl.note);
+  }
+  if (databaseUrl.present && !databaseUrl.style) {
+    problems.push(databaseUrl.note ?? 'DATABASE_URL could not be parsed.');
+  }
 
   const ok = problems.length === 0;
 
