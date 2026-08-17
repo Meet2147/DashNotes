@@ -4,9 +4,10 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
+import Link from 'next/link';
 import { useAppStore } from '@/store/useAppStore';
 import { Note } from '@/types';
-import { Pin, Trash2, ChevronLeft, Loader2, BookOpen } from 'lucide-react';
+import { Pin, Trash2, ChevronLeft, Loader2, BookOpen, PenLine } from 'lucide-react';
 
 const AUTOSAVE_DELAY = 800;
 
@@ -158,6 +159,14 @@ export default function BlockEditor({ note }: BlockEditorProps) {
           >
             <Pin size={14} className={isPinned ? 'rotate-45' : ''} />
           </button>
+          <Link
+            href={`/app/handwriting?note=${note.id}`}
+            title="Write this note out in your own handwriting"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors"
+          >
+            <PenLine size={13} />
+            Handwrite
+          </Link>
           <button
             onClick={toggleAiSidebar}
             title="Toggle AI Sidebar"

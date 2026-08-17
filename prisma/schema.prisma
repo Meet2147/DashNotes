@@ -57,6 +57,7 @@ model User {
   aiUsage       AiUsage[]
   plan          UserPlan?
   referrals     Referral[] @relation("ReferrerRelation")
+  handwriting   HandwritingProfile[]
   createdAt     DateTime  @default(now())
 }
 
@@ -101,6 +102,21 @@ model UserPlan {
   razorpaySubscriptionId String?
   user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   updatedAt              DateTime @updatedAt
+}
+
+model HandwritingProfile {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   @default("My Handwriting")
+  isDefault Boolean  @default(false)
+  glyphs    String   @default("{}") // JSON: { [char]: GlyphSample[] }
+  metrics   String   @default("{}") // JSON: HandwritingMetrics
+  settings  String   @default("{}") // JSON: partial RenderSettings (per-profile defaults)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Referral {
