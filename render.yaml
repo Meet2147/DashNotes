@@ -19,11 +19,25 @@ services:
         fromDatabase:
           name: dashnotes-db
           property: connectionString
+      # next-auth refuses to start in production without a secret, which took
+      # every /api/auth/* route down with a 500. generateValue creates one on
+      # first deploy and keeps it stable afterwards — changing it would sign
+      # every existing user out.
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      # Resolves to the bare hostname (no scheme); next-auth assumes https,
+      # which is what Render serves.
       - key: NEXTAUTH_URL
         fromService:
           type: web
           name: dashnotes
           property: host
+      # Shared demo account on /login for testing. Set to false before real users.
+      - key: NEXT_PUBLIC_ENABLE_DEMO_LOGIN
+        value: true
+      # Set in the Render dashboard; the AI features return 500 without it.
+      - key: PERPLEXITY_API_KEY
+        sync: false
 
 databases:
   - name: dashnotes-db

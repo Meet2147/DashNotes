@@ -3,9 +3,10 @@
 import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, Play } from 'lucide-react';
 import Link from 'next/link';
 import DashNotesLogo from '@/components/DashNotesLogo';
+import { DEMO_EMAIL, DEMO_PASSWORD, demoLoginEnabled } from '@/lib/demo';
 
 type Tab = 'signin' | 'signup';
 
@@ -19,6 +20,40 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [demoLoading, setDemoLoading] = useState(false);
+  const showDemo = demoLoginEnabled();
+
+  /**
+   * One-click sign-in for testing: make sure the demo account exists (the seed
+   * endpoint is idempotent and also fills it with sample notes), then sign in.
+   */
+  const handleDemoLogin = async () => {
+    setError('');
+    setSuccessMsg('');
+    setDemoLoading(true);
+    try {
+      const seed = await fetch('/api/dev/seed');
+      if (!seed.ok) {
+        const data = await seed.json().catch(() => ({}));
+        setError(data.error ?? 'The demo account could not be prepared.');
+        return;
+      }
+      const result = await signIn('credentials', {
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+        redirect: false,
+      });
+      if (result?.error) {
+        setError('The demo account exists but sign-in failed. Check NEXTAUTH_SECRET is set.');
+        return;
+      }
+      router.replace('/app');
+    } catch {
+      setError('Could not reach the server. Is it running?');
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +73,8 @@ function LoginForm() {
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, ref }),
+          // The API reads `referralCode`; sending `ref` silently dropped it.
+          body: JSON.stringify({ email, password, referralCode: ref || undefined }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -146,13 +182,38 @@ function LoginForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || demoLoading}
               className="w-full py-3 bg-violet-600 hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               {tab === 'signin' ? 'Sign In' : 'Create Account'}
             </button>
           </form>
+
+          {showDemo && (
+            <>
+              <div className="flex items-center gap-3 my-5">
+                <div className="flex-1 h-px bg-violet-100" />
+                <span className="text-xs text-violet-300 font-medium uppercase tracking-wider">or</span>
+                <div className="flex-1 h-px bg-violet-100" />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                disabled={loading || demoLoading}
+                className="w-full py-3 bg-violet-50 hover:bg-violet-100 border border-violet-200 disabled:opacity-60 disabled:cursor-not-allowed text-violet-700 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                {demoLoading ? <Loader2 size={16} className="animate-spin" /> : <Play size={15} />}
+                {demoLoading ? 'Preparing demo…' : 'Explore the demo account'}
+              </button>
+              <p className="text-[11px] text-gray-400 text-center mt-2.5 leading-relaxed">
+                Signs you straight in with sample notes and unlimited AI credits.
+                <br />
+                <span className="font-mono">{DEMO_EMAIL}</span> · <span className="font-mono">{DEMO_PASSWORD}</span>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
