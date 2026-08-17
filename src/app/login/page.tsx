@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Loader2, AlertCircle, Play } from 'lucide-react';
 import Link from 'next/link';
 import DashNotesLogo from '@/components/DashNotesLogo';
-import { DEMO_EMAIL, DEMO_PASSWORD, demoLoginEnabled } from '@/lib/demo';
+import { DEMO_EMAIL, DEMO_PASSWORD } from '@/lib/demo';
 
 type Tab = 'signin' | 'signup';
 
@@ -21,7 +21,22 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [demoLoading, setDemoLoading] = useState(false);
-  const showDemo = demoLoginEnabled();
+  // Asked of the server rather than read from a build-time constant, so it is
+  // right regardless of when or where the environment was configured.
+  const [showDemo, setShowDemo] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/demo')
+      .then((res) => (res.ok ? res.json() : { enabled: false }))
+      .then((data) => {
+        if (!cancelled) setShowDemo(data?.enabled === true);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /**
    * One-click sign-in for testing: make sure the demo account exists (the seed
@@ -32,19 +47,21 @@ function LoginForm() {
     setSuccessMsg('');
     setDemoLoading(true);
     try {
-      const seed = await fetch('/api/dev/seed');
-      if (!seed.ok) {
-        const data = await seed.json().catch(() => ({}));
+      // Creates the account, or repairs it if a previous attempt left it in a
+      // state where the documented password no longer worked.
+      const prepared = await fetch('/api/demo', { method: 'POST' });
+      const data = await prepared.json().catch(() => ({}));
+      if (!prepared.ok) {
         setError(data.error ?? 'The demo account could not be prepared.');
         return;
       }
       const result = await signIn('credentials', {
-        email: DEMO_EMAIL,
-        password: DEMO_PASSWORD,
+        email: data.email ?? DEMO_EMAIL,
+        password: data.password ?? DEMO_PASSWORD,
         redirect: false,
       });
       if (result?.error) {
-        setError('The demo account exists but sign-in failed. Check NEXTAUTH_SECRET is set.');
+        setError('The demo account was prepared but sign-in failed. Check NEXTAUTH_SECRET is set.');
         return;
       }
       router.replace('/app');
