@@ -132,6 +132,21 @@ export async function checkDatabase(): Promise<DbCheck> {
 }
 
 /**
+ * Mask a hostname down to something identifiable but not fully published.
+ *
+ * Render host ids look like `dpg-d8ard9gjs32c739fb3eg-a`, and knowing *which*
+ * database the app is actually pointed at is the single most useful fact when
+ * auth breaks after a database is replaced — the id alone is useless without
+ * credentials, but the first few characters are enough to spot a stale value.
+ */
+function redactHost(host: string): string {
+  const [first, ...rest] = host.split('.');
+  const domain = rest.length > 0 ? `.${rest.join('.')}` : '';
+  const shown = first.length > 12 ? `${first.slice(0, 8)}\u2026${first.slice(-2)}` : first;
+  return `${shown}${domain}`;
+}
+
+/**
  * Describe DATABASE_URL's shape without revealing it. The hostname style is the
  * single most common cause of a failure here, and it is not a secret — but the
  * credentials in the string very much are, so they never leave the server.
@@ -140,6 +155,9 @@ export function describeDatabaseUrl(): {
   present: boolean;
   style?: 'render-internal' | 'render-external' | 'localhost' | 'other';
   hasSslMode?: boolean;
+  /** Partially masked hostname — enough to tell which database this is. */
+  host?: string;
+  database?: string;
   note?: string;
 } {
   const url = process.env.DATABASE_URL;
@@ -149,29 +167,30 @@ export function describeDatabaseUrl(): {
     const parsed = new URL(url);
     const host = parsed.hostname;
     const hasSslMode = parsed.searchParams.has('sslmode');
+    const masked = redactHost(host);
+    const database = parsed.pathname.replace(/^\//, '') || undefined;
+    const common = { present: true as const, hasSslMode, host: masked, database };
 
     if (/^dpg-[a-z0-9-]+$/i.test(host)) {
       return {
-        present: true,
+        ...common,
         style: 'render-internal',
-        hasSslMode,
         note: 'Render-internal hostname. Only resolves from a Render service in the same region as the database.',
       };
     }
     if (/\.render\.com$/i.test(host)) {
       return {
-        present: true,
+        ...common,
         style: 'render-external',
-        hasSslMode,
         note: hasSslMode
           ? undefined
           : 'No sslmode in DATABASE_URL; sslmode=require is applied automatically for render.com hosts.',
       };
     }
     if (host === 'localhost' || host === '127.0.0.1') {
-      return { present: true, style: 'localhost', hasSslMode };
+      return { ...common, style: 'localhost' };
     }
-    return { present: true, style: 'other', hasSslMode };
+    return { ...common, style: 'other' };
   } catch {
     return { present: true, note: 'DATABASE_URL is not a valid URL.' };
   }
