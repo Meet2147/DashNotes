@@ -19,7 +19,9 @@ import {
   Trash2,
   Users,
   MessageCircle,
+  PenLine,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useAppStore } from '@/store/useAppStore';
 import { signOut, useSession } from 'next-auth/react';
 import { Collection } from '@/types';
@@ -56,6 +58,34 @@ function NavItem({
       {icon}
       {!collapsed && <span>{label}</span>}
     </button>
+  );
+}
+
+/** Same look as NavItem, but navigates to another route instead of switching view. */
+function NavLink({
+  icon,
+  label,
+  href,
+  collapsed,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  collapsed?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`
+        w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all
+        text-gray-600 hover:bg-gray-100
+        ${collapsed ? 'justify-center' : ''}
+      `}
+      title={collapsed ? label : undefined}
+    >
+      {icon}
+      {!collapsed && <span>{label}</span>}
+    </Link>
   );
 }
 
@@ -247,6 +277,12 @@ export default function Sidebar() {
               label="Tags"
               active={view === 'tags'}
               onClick={() => handleNavClick('tags')}
+              collapsed={!sidebarOpen}
+            />
+            <NavLink
+              icon={<PenLine size={16} />}
+              label="Handwriting"
+              href="/app/handwriting"
               collapsed={!sidebarOpen}
             />
 
