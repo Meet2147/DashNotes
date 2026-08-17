@@ -128,7 +128,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-violet-50 to-indigo-50 flex items-center justify-center p-4">
+    <div className="min-h-screen neu-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -141,14 +141,14 @@ function LoginForm() {
           </p>
         </div>
 
-        <div className="bg-white border border-violet-100 rounded-2xl p-8 shadow-lg shadow-violet-100/50">
+        <div className="neu-surface rounded-3xl p-8">
           {/* Tabs */}
-          <div className="flex rounded-xl bg-violet-100 p-1 mb-6">
+          <div className="flex rounded-2xl neu-inset p-1.5 mb-6">
             <button
               onClick={() => { setTab('signin'); setError(''); setSuccessMsg(''); }}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                 tab === 'signin'
-                  ? 'bg-violet-600 text-white shadow-sm'
+                  ? 'neu-primary text-white'
                   : 'text-violet-500 hover:text-violet-700'
               }`}
             >
@@ -158,7 +158,7 @@ function LoginForm() {
               onClick={() => { setTab('signup'); setError(''); setSuccessMsg(''); }}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                 tab === 'signup'
-                  ? 'bg-violet-600 text-white shadow-sm'
+                  ? 'neu-primary text-white'
                   : 'text-violet-500 hover:text-violet-700'
               }`}
             >
@@ -190,7 +190,7 @@ function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full pl-9 pr-4 py-3 bg-violet-50 border border-violet-200 text-gray-900 rounded-xl text-sm placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                  className="w-full pl-9 pr-4 py-3 neu-inset text-gray-900 rounded-xl text-sm placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
                 />
               </div>
             </div>
@@ -206,7 +206,7 @@ function LoginForm() {
                   placeholder="••••••••"
                   required
                   minLength={6}
-                  className="w-full pl-9 pr-4 py-3 bg-violet-50 border border-violet-200 text-gray-900 rounded-xl text-sm placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                  className="w-full pl-9 pr-4 py-3 neu-inset text-gray-900 rounded-xl text-sm placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
                 />
               </div>
             </div>
@@ -214,7 +214,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading || demoLoading}
-              className="w-full py-3 bg-violet-600 hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 neu-primary disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               {tab === 'signin' ? 'Sign In' : 'Create Account'}
@@ -233,7 +233,7 @@ function LoginForm() {
                 type="button"
                 onClick={handleDemoLogin}
                 disabled={loading || demoLoading}
-                className="w-full py-3 bg-violet-50 hover:bg-violet-100 border border-violet-200 disabled:opacity-60 disabled:cursor-not-allowed text-violet-700 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 neu-raised disabled:opacity-60 disabled:cursor-not-allowed text-violet-700 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
               >
                 {demoLoading ? <Loader2 size={16} className="animate-spin" /> : <Play size={15} />}
                 {demoLoading ? 'Preparing demo…' : 'Explore the demo account'}

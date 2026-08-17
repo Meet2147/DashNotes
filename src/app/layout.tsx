@@ -33,10 +33,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=5" />
-        <link rel="apple-touch-icon" href="/icon-192.svg?v=5" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6" />
+        <link rel="apple-touch-icon" href="/icon-192.svg?v=6" />
       </head>
-      <body className="h-screen overflow-hidden antialiased font-sans bg-white text-gray-900">
+      {/*
+        No overflow-hidden here: body overflow propagates to the viewport, which
+        made every page taller than the screen impossible to scroll by wheel or
+        touch (the handwriting page and the landing page both were). The notes
+        app's fixed three-panel layout doesn't rely on it — /app pins itself with
+        its own h-screen overflow-hidden container.
+      */}
+      <body className="min-h-screen antialiased font-sans bg-white text-gray-900">
         <SessionProviderWrapper>
           {children}
         </SessionProviderWrapper>
