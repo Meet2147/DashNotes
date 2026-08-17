@@ -63,6 +63,65 @@ interface RawGlyph {
   empty: boolean;
 }
 
+/**
+ * Estimate the scan's rotation by finding the angle at which the sheet's dark
+ * pixels collapse into the sharpest horizontal bands. Real scans are rarely
+ * perfectly straight, and even half a degree makes an axis-aligned cell clip
+ * tilted grid lines through its interior — which is exactly how table fragments
+ * ended up imported as "letters".
+ */
+function estimateSkew(dark: Uint8Array, width: number, height: number): number {
+  const score = (theta: number): number => {
+    const tan = Math.tan(theta);
+    const bins = new Float64Array(height + 64);
+    for (let y = 0; y < height; y += 2) {
+      const row = y * width;
+      for (let x = 0; x < width; x += 2) {
+        if (!dark[row + x]) continue;
+        const yp = Math.round(y - x * tan) + 32;
+        if (yp >= 0 && yp < bins.length) bins[yp]++;
+      }
+    }
+    let sum = 0;
+    for (let i = 0; i < bins.length; i++) sum += bins[i] * bins[i];
+    return sum;
+  };
+
+  let best = 0;
+  let bestScore = -1;
+  for (let deg = -3; deg <= 3.001; deg += 0.3) {
+    const sc = score((deg * Math.PI) / 180);
+    if (sc > bestScore) {
+      bestScore = sc;
+      best = deg;
+    }
+  }
+  for (let deg = best - 0.3; deg <= best + 0.301; deg += 0.05) {
+    const sc = score((deg * Math.PI) / 180);
+    if (sc > bestScore) {
+      bestScore = sc;
+      best = deg;
+    }
+  }
+  return (best * Math.PI) / 180;
+}
+
+/** Redraw the canvas rotated by -angle so the grid is axis-aligned. */
+function deskew(source: HTMLCanvasElement, angle: number): HTMLCanvasElement {
+  if (Math.abs(angle) < (0.05 * Math.PI) / 180) return source;
+  const out = document.createElement('canvas');
+  out.width = source.width;
+  out.height = source.height;
+  const ctx = out.getContext('2d');
+  if (!ctx) return source;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.translate(out.width / 2, out.height / 2);
+  ctx.rotate(-angle);
+  ctx.drawImage(source, -source.width / 2, -source.height / 2);
+  return out;
+}
+
 export interface CalligraphrResult {
   glyphs: GlyphMap;
   captured: string[];
@@ -73,6 +132,8 @@ export interface CalligraphrResult {
   /** First character of the *next* page, for multi-page sheets. */
   nextChar: string | null;
   cellCount: number;
+  /** Components discarded as sliced grid lines — high numbers mean a bad scan. */
+  junkDropped: number;
   warnings: string[];
 }
 
@@ -261,18 +322,32 @@ export function importCalligraphrSheet(
     throw new Error('The first character must be a single printable character, like ! or a.');
   }
 
-  const ctx = sourceCanvas.getContext('2d');
+  let canvas = sourceCanvas;
+  let ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas 2D context unavailable');
-  const gray = luminance(ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height));
-  const { width, height } = gray;
+  let gray = luminance(ctx.getImageData(0, 0, canvas.width, canvas.height));
 
-  const white = Math.max(64, percentileLuminance(gray, 0.85));
-  const structuralCut = white * 0.5; // grid lines, labels, ink, QR
+  let white = Math.max(64, percentileLuminance(gray, 0.85));
+  let dark = new Uint8Array(gray.width * gray.height);
+  for (let i = 0; i < dark.length; i++) dark[i] = gray.data[i] < white * 0.5 ? 1 : 0;
+
+  // Straighten the scan first: axis-aligned cells over a rotated grid clip the
+  // table's own lines into the interiors, which imports as junk.
+  const angle = estimateSkew(dark, gray.width, gray.height);
+  const straightened = deskew(canvas, angle);
+  if (straightened !== canvas) {
+    canvas = straightened;
+    ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas 2D context unavailable');
+    gray = luminance(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    white = Math.max(64, percentileLuminance(gray, 0.85));
+    dark = new Uint8Array(gray.width * gray.height);
+    for (let i = 0; i < dark.length; i++) dark[i] = gray.data[i] < white * 0.5 ? 1 : 0;
+  }
+
+  const { width, height } = gray;
   const inkCut = white * 0.55; // ink yes; grey ghosts and guides no
   const ramp = Math.max(16, white * 0.12);
-
-  const dark = new Uint8Array(width * height);
-  for (let i = 0; i < dark.length; i++) dark[i] = gray.data[i] < structuralCut ? 1 : 0;
 
   const { cells, warnings } = findCells(dark, width, height);
 
@@ -281,14 +356,26 @@ export function importCalligraphrSheet(
   const raw: RawGlyph[] = [];
   let code: number | null = startCode;
   const unsupported: string[] = [];
+  let junkDropped = 0;
+  let wideSkipped = 0;
+  const medianCellW = median(cells.map((c) => c.w));
 
   for (const cell of cells) {
     if (code === null) break;
+
+    // Calligraphr merges cells to hold its QR block. A merged cell is much wider
+    // than the character cells and carries no character — consuming one here is
+    // what shifted every subsequent letter's identity.
+    if (cell.w > medianCellW * 1.45) {
+      wideSkipped++;
+      continue;
+    }
+
     const char = String.fromCharCode(code);
     code = nextAscii(code);
 
     const insetX = Math.max(3, cell.w * 0.06);
-    const insetY = Math.max(3, cell.h * 0.06);
+    const insetY = Math.max(3, cell.h * 0.1);
     const x0 = Math.round(cell.x + insetX);
     const y0 = Math.round(cell.y + insetY);
     const w = Math.round(cell.w - insetX * 2);
@@ -320,12 +407,40 @@ export function importCalligraphrSheet(
     }
 
     // Drop specks the same way the native path does, then take the kept bbox.
-    const { components } = connectedComponents(coverage, w, h, 48, 1);
+    const { components, labels } = connectedComponents(coverage, w, h, 48, 1);
     let largest = 0;
     for (const c of components) if (c.area > largest) largest = c.area;
     const minArea = Math.max(14, largest * 0.02);
+
+    // A component that spans the interior edge-to-edge, or is extremely long and
+    // thin, is a sliced grid line — unless this character legitimately IS a long
+    // thin stroke. Erase rejected components so they cannot resurface later.
+    const legitimatelyThin = '-_=~"\',.'.includes(char);
+    const rejected = new Set<number>();
     for (const c of components) {
       if (c.area < minArea) continue;
+      const cw = c.maxX - c.minX + 1;
+      const ch = c.maxY - c.minY + 1;
+      const spansW = cw >= w - 3;
+      const spansH = ch >= h - 3;
+      const aspect = Math.max(cw / ch, ch / cw);
+      const isLine =
+        (spansW && ch < h * 0.25) ||
+        (spansH && cw < w * 0.25) ||
+        (!legitimatelyThin && aspect > 9 && Math.max(cw, ch) > Math.max(w, h) * 0.55);
+      if (isLine) {
+        rejected.add(Math.abs(c.label));
+        junkDropped++;
+      }
+    }
+    if (rejected.size > 0) {
+      for (let i = 0; i < coverage.length; i++) {
+        if (rejected.has(Math.abs(labels[i]))) coverage[i] = 0;
+      }
+    }
+
+    for (const c of components) {
+      if (c.area < minArea || rejected.has(Math.abs(c.label))) continue;
       if (c.minX < minX) minX = c.minX;
       if (c.minY < minY) minY = c.minY;
       if (c.maxX > maxX) maxX = c.maxX;
@@ -432,6 +547,15 @@ export function importCalligraphrSheet(
   const lastConsumed = startCode + raw.length - 1;
   const nextCode = raw.length > 0 ? nextAscii(lastConsumed) : startCode;
 
+  if (wideSkipped > 0) {
+    warnings.push(`${wideSkipped} merged cells (the QR block area) were skipped.`);
+  }
+  if (junkDropped > Math.max(4, captured.length * 0.35)) {
+    warnings.push(
+      `${junkDropped} grid-line fragments had to be filtered out — if letters look wrong, re-scan the sheet flatter and straighter.`
+    );
+  }
+
   return {
     glyphs,
     captured,
@@ -439,6 +563,7 @@ export function importCalligraphrSheet(
     unsupported: Array.from(new Set(unsupported)),
     nextChar: nextCode === null ? null : String.fromCharCode(nextCode),
     cellCount: raw.length,
+    junkDropped,
     warnings,
   };
 }

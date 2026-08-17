@@ -18,9 +18,15 @@ import SheetUploader from './SheetUploader';
 
 interface TemplateStepProps {
   onExtracted: (glyphs: GlyphMap, captured: string[], missing: string[]) => void;
+  /**
+   * Merge without navigating away. Calligraphr sheets span multiple pages, so
+   * the importer stays on this step for the next upload instead of jumping to
+   * review after the first one (which would also reset its page counter).
+   */
+  onImported: (glyphs: GlyphMap) => void;
 }
 
-export default function TemplateStep({ onExtracted }: TemplateStepProps) {
+export default function TemplateStep({ onExtracted, onImported }: TemplateStepProps) {
   const [error, setError] = useState<string | null>(null);
 
   const handlePrint = () => {
@@ -100,7 +106,11 @@ export default function TemplateStep({ onExtracted }: TemplateStepProps) {
           You can import it directly instead of writing everything again. The sheet&apos;s own grid
           is detected, so no corner squares are needed — just a flat scan.
         </p>
-        <CalligraphrUploader onExtracted={onExtracted} />
+        <CalligraphrUploader onExtracted={(glyphs) => onImported(glyphs)} />
+        <p className="text-xs text-gray-400 mt-3">
+          Multi-page sheets: upload each page here, then open{' '}
+          <span className="font-medium text-gray-600">Review</span> (step 3) to check every letter.
+        </p>
       </div>
 
       {error && (

@@ -32,6 +32,8 @@ interface GlyphReviewProps {
   glyphs: GlyphMap;
   onReplace: (char: string, sample: GlyphSample) => void;
   onRemove: (char: string) => void;
+  /** Wipe the whole draft — the escape hatch after a bad sheet import. */
+  onClearAll?: () => void;
 }
 
 function GlyphCell({
@@ -104,7 +106,7 @@ function GlyphCell({
   );
 }
 
-export default function GlyphReview({ glyphs, onReplace, onRemove }: GlyphReviewProps) {
+export default function GlyphReview({ glyphs, onReplace, onRemove, onClearAll }: GlyphReviewProps) {
   const [editing, setEditing] = useState<string | null>(null);
 
   const missingRequired = useMemo(
@@ -145,10 +147,24 @@ export default function GlyphReview({ glyphs, onReplace, onRemove }: GlyphReview
         </div>
       )}
 
-      <p className="text-sm text-gray-500">
-        Each preview sits on its baseline exactly as it will on the page. If a letter looks too high or
-        low, or picked up a stray mark, tap it and draw it again.
-      </p>
+      <div className="flex flex-wrap items-start gap-3">
+        <p className="text-sm text-gray-500 flex-1 min-w-[240px]">
+          Each preview sits on its baseline exactly as it will on the page. If a letter looks too high
+          or low, or picked up a stray mark, tap it and draw it again.
+        </p>
+        {onClearAll && capturedCount > 0 && (
+          <button
+            onClick={() => {
+              if (confirm(`Remove all ${capturedCount} captured characters and start over?`)) {
+                onClearAll();
+              }
+            }}
+            className="px-3 py-2 rounded-xl text-xs font-medium text-red-600 hover:bg-red-50 border border-red-100 transition-colors"
+          >
+            Clear all &amp; start over
+          </button>
+        )}
+      </div>
 
       {GROUPS.map((group) => (
         <div key={group.label}>

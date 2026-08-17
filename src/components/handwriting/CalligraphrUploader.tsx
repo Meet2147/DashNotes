@@ -1,22 +1,32 @@
 'use client';
 
 /**
- * Import glyphs from a filled-in Calligraphr sheet, so work already done on
- * their templates is not wasted.
+ * Import glyphs from a filled-in Calligraphr sheet.
  *
- * Character identity is positional (Calligraphr's cells run in ASCII order), so
- * the user tells us the first character on the page and can import multiple
- * pages one after another — the field advances itself between pages. Everything
- * still funnels through the review grid before a profile can be saved.
+ * Character identity is positional (their cells run in ASCII order), which makes
+ * misalignment the dangerous failure: one wrong start character relabels the
+ * whole page. So nothing is added to the profile until the user has seen a
+ * preview of glyphs next to the labels they would receive and confirmed it.
+ * The arrows re-run the assignment shifted by one, on the already-analysed
+ * canvas, so fixing a misalignment is two clicks rather than a re-scan.
  */
 
-import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Loader2, Upload } from 'lucide-react';
-import { importCalligraphrSheet } from '@/lib/handwriting/calligraphr';
+import { useRef, useState } from 'react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Loader2,
+  Upload,
+  X,
+} from 'lucide-react';
+import { importCalligraphrSheet, type CalligraphrResult } from '@/lib/handwriting/calligraphr';
 import { imageToCanvas, loadImageFile } from '@/lib/handwriting/image';
 import type { GlyphMap } from '@/lib/handwriting/types';
 
 const MAX_EDGE = 2400;
+const PREVIEW_COUNT = 10;
 
 interface CalligraphrUploaderProps {
   onExtracted: (glyphs: GlyphMap, captured: string[], missing: string[]) => void;
@@ -26,46 +36,72 @@ export default function CalligraphrUploader({ onExtracted }: CalligraphrUploader
   const [startChar, setStartChar] = useState('!');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
+  const [pending, setPending] = useState<CalligraphrResult | null>(null);
+  const [confirmedMsg, setConfirmedMsg] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const handleFile = async (file: File) => {
+  const analyze = async (canvas: HTMLCanvasElement, first: string) => {
     setBusy(true);
     setError(null);
-    setSummary(null);
+    setConfirmedMsg(null);
+    // Yield so the busy state paints before the synchronous pixel work.
+    await new Promise((r) => setTimeout(r, 40));
     try {
-      const img = await loadImageFile(file);
-      const canvas = imageToCanvas(img, MAX_EDGE);
-      // Yield so the busy state paints before the synchronous work.
-      await new Promise((r) => setTimeout(r, 40));
-      const result = importCalligraphrSheet(canvas, startChar);
-
+      const result = importCalligraphrSheet(canvas, first);
       if (result.captured.length === 0) {
+        setPending(null);
         setError(
           'The grid was read but no handwriting was found in it. Check that the ink is dark (black or blue) and the scan is not washed out.'
         );
         return;
       }
-
-      const parts = [
-        `Imported ${result.captured.length} characters (${result.captured[0]} … ${result.captured[result.captured.length - 1]}).`,
-      ];
-      if (result.blank.length > 0) parts.push(`${result.blank.length} cells were blank.`);
-      if (result.unsupported.length > 0) {
-        parts.push(`Skipped unsupported: ${result.unsupported.join(' ')}.`);
-      }
-      parts.push(...result.warnings);
-      if (result.nextChar) {
-        parts.push(`For the next page, the first character is set to "${result.nextChar}".`);
-        setStartChar(result.nextChar);
-      }
-      setSummary(parts.join(' '));
-      onExtracted(result.glyphs, result.captured, []);
+      setPending(result);
     } catch (e) {
+      setPending(null);
       setError(e instanceof Error ? e.message : 'That sheet could not be read.');
     } finally {
       setBusy(false);
     }
   };
+
+  const handleFile = async (file: File) => {
+    setError(null);
+    try {
+      const img = await loadImageFile(file);
+      const canvas = imageToCanvas(img, MAX_EDGE);
+      canvasRef.current = canvas;
+      await analyze(canvas, startChar);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'That image could not be read.');
+    }
+  };
+
+  const shift = async (delta: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !pending) return;
+    const next = String.fromCharCode(startChar.charCodeAt(0) + delta);
+    setStartChar(next);
+    await analyze(canvas, next);
+  };
+
+  const confirm = () => {
+    if (!pending) return;
+    onExtracted(pending.glyphs, pending.captured, []);
+    const msg = [
+      `Added ${pending.captured.length} characters to your letters.`,
+      pending.nextChar ? `For the next page, the first character is set to "${pending.nextChar}".` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    if (pending.nextChar) setStartChar(pending.nextChar);
+    setPending(null);
+    canvasRef.current = null;
+    setConfirmedMsg(msg);
+  };
+
+  const previews = pending
+    ? pending.captured.slice(0, PREVIEW_COUNT).map((ch) => ({ ch, sample: pending.glyphs[ch][0] }))
+    : [];
 
   return (
     <div className="space-y-3">
@@ -101,10 +137,72 @@ export default function CalligraphrUploader({ onExtracted }: CalligraphrUploader
 
       <p className="text-xs text-gray-400">
         Works with flat scans (PNG or JPG — export PDFs as images first). Their standard template
-        starts at <span className="font-mono">!</span>; for a later page, enter whatever character
-        its first cell shows. Character identity comes from cell order, so check the review grid
-        after importing — any mislabelled letter can be redrawn there.
+        starts at <span className="font-mono">!</span>; a later page starts wherever the previous one
+        ended. You will see a preview before anything is added.
       </p>
+
+      {pending && (
+        <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-4 space-y-3">
+          <div className="text-sm font-semibold text-gray-800">
+            Check the labels before adding — does each letter match its tag?
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {previews.map(({ ch, sample }) => (
+              <div key={ch} className="bg-white rounded-lg border border-gray-200 px-2 py-1.5 text-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={sample.png}
+                  alt={ch}
+                  className="h-9 mx-auto"
+                  style={{ imageRendering: 'auto' }}
+                />
+                <div className="text-[11px] font-mono font-bold text-violet-700 mt-1">{ch}</div>
+              </div>
+            ))}
+          </div>
+          {(pending.warnings.length > 0 || pending.blank.length > 0) && (
+            <div className="text-xs text-gray-500">
+              {pending.blank.length > 0 && `${pending.blank.length} blank cells. `}
+              {pending.warnings.join(' ')}
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => shift(-1)}
+              disabled={busy}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+              title="Labels are one ahead — shift them back"
+            >
+              <ArrowLeft size={13} /> Shift labels
+            </button>
+            <button
+              onClick={() => shift(1)}
+              disabled={busy}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+              title="Labels are one behind — shift them forward"
+            >
+              Shift labels <ArrowRight size={13} />
+            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setPending(null);
+                  canvasRef.current = null;
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X size={13} /> Discard
+              </button>
+              <button
+                onClick={confirm}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 transition-colors"
+              >
+                <Check size={13} /> Labels match — add {pending.captured.length} letters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="flex items-start gap-2 px-3.5 py-3 rounded-xl bg-amber-50 text-amber-800 text-sm">
@@ -112,10 +210,10 @@ export default function CalligraphrUploader({ onExtracted }: CalligraphrUploader
           <span>{error}</span>
         </div>
       )}
-      {summary && (
+      {confirmedMsg && (
         <div className="flex items-start gap-2 px-3.5 py-3 rounded-xl bg-emerald-50 text-emerald-800 text-sm">
-          <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
-          <span>{summary}</span>
+          <Check size={16} className="flex-shrink-0 mt-0.5" />
+          <span>{confirmedMsg}</span>
         </div>
       )}
     </div>
