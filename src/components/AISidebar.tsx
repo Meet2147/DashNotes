@@ -252,7 +252,16 @@ export default function AISidebar({ note }: AISidebarProps) {
 
   return (
     <>
-      <div className="flex flex-col w-full md:w-[360px] h-full border-l border-gray-200 bg-gray-50 flex-shrink-0">
+      {/*
+        Two layout modes. On wide screens (lg+) the sidebar is a fixed 360px
+        column beside the editor. Below that — iPads in portrait, small windows —
+        the fixed columns (nav 256 + notes 320 + this 360) exceed the viewport
+        and the app root is overflow-hidden, so a column here would open
+        off-screen and look like the feature doesn't exist. Instead it overlays
+        the viewport from the right (fixed, so an ancestor cannot shrink it),
+        dismissed with its own close button.
+      */}
+      <div className="fixed inset-y-0 right-0 z-[60] flex flex-col w-full sm:w-[380px] max-w-full h-full border-l border-gray-200 bg-gray-50 shadow-2xl lg:static lg:z-auto lg:w-[360px] lg:shadow-none lg:flex-shrink-0">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-2">

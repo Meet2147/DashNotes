@@ -33,8 +33,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6" />
-        <link rel="apple-touch-icon" href="/icon-192.svg?v=6" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=7" />
+        <link rel="apple-touch-icon" href="/icon-192.svg?v=7" />
       </head>
       {/*
         No overflow-hidden here: body overflow propagates to the viewport, which

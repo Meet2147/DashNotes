@@ -1,32 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-  
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="1024" height="1024">
+  <!--
+    Canonical DashNotes mark: a hand-drawn purple paper plane looping across
+    graph paper, leaving its trajectory behind it.
+    Rendered to: public/favicon.svg (inlined), public/icon-*.png, macos/AppIcon.iconset.
+    Keep in sync with src/components/DashNotesLogo.tsx.
+  -->
   <defs>
-    <linearGradient id="dn-tile" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#F1F3FA"/>
-      <stop offset="100%" stop-color="#DDE1EF"/>
-    </linearGradient>
-    <linearGradient id="dn-nib" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#8B5CF6"/>
-      <stop offset="100%" stop-color="#5B21B6"/>
-    </linearGradient>
-    <radialGradient id="dn-well" cx="0.35" cy="0.3" r="1">
-      <stop offset="0%" stop-color="#D3D8E8"/>
-      <stop offset="100%" stop-color="#C4CADD"/>
-    </radialGradient>
-    <filter id="dn-soft" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="-4" dy="-4" stdDeviation="5" flood-color="#FFFFFF" flood-opacity="0.9"/>
-      <feDropShadow dx="5" dy="6" stdDeviation="6" flood-color="#AEB6CC" flood-opacity="0.55"/>
-    </filter>
-    <filter id="dn-nib-shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#3B1D7A" flood-opacity="0.35"/>
-    </filter>
+    <clipPath id="dn-clip">
+      <rect x="6" y="6" width="116" height="116" rx="28"/>
+    </clipPath>
+    <pattern id="dn-grid" width="10.5" height="10.5" patternUnits="userSpaceOnUse">
+      <path d="M 10.5 0 L 0 0 0 10.5" fill="none" stroke="#D7E3F4" stroke-width="0.9"/>
+    </pattern>
   </defs>
-  <rect x="8" y="8" width="112" height="112" rx="30" fill="url(#dn-tile)" filter="url(#dn-soft)"/>
-  <circle cx="64" cy="64" r="40" fill="url(#dn-well)"/>
-  <circle cx="64" cy="64" r="40" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="1.5"/>
-  <g filter="url(#dn-nib-shadow)">
-    <path d="M64 104 C 70 96 86 82 86 60 C 86 44 80 34 76 30 L 52 30 C 48 34 42 44 42 60 C 42 82 58 96 64 104 Z" fill="url(#dn-nib)"/>
-    <circle cx="64" cy="54" r="7" fill="#EDEFF7"/>
-    <line x1="64" y1="62" x2="64" y2="99" stroke="#EDEFF7" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Graph-paper tile -->
+  <rect x="6" y="6" width="116" height="116" rx="28" fill="#FDFEFF"/>
+  <g clip-path="url(#dn-clip)">
+    <rect x="6" y="6" width="116" height="116" fill="url(#dn-grid)"/>
+    <!-- heavier grid every 4 squares, like real graph paper -->
+    <path d="M 6 27 H 122 M 6 69 H 122 M 6 111 H 122 M 27 6 V 122 M 69 6 V 122 M 111 6 V 122"
+          fill="none" stroke="#C9D9EF" stroke-width="1"/>
   </g>
+  <rect x="6" y="6" width="116" height="116" rx="28" fill="none" stroke="#E3E9F5" stroke-width="2"/>
+
+  <!-- Trajectory: swoops in from the lower right with a loop-the-loop -->
+  <path d="M 71 87
+           C 79 97, 90 103, 98 97
+           C 105 91, 104 81, 96 81
+           C 88 81, 86 92, 95 96
+           C 104 100, 112 96, 117 88"
+        fill="none" stroke="#26232E" stroke-width="3.4"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Paper plane, nose to the upper left -->
+  <!-- underside (dark) -->
+  <path d="M 26 40 L 58 63 L 71 87 L 48 64 Z" fill="#7C4DEF"
+        stroke="#26232E" stroke-width="3" stroke-linejoin="round"/>
+  <!-- lower face (mid) -->
+  <path d="M 26 40 L 88 57 L 71 87 L 58 63 Z" fill="#A78BFA"
+        stroke="#26232E" stroke-width="3" stroke-linejoin="round"/>
+  <!-- top face (light) -->
+  <path d="M 26 40 L 88 57 L 58 63 Z" fill="#CBB8FB"
+        stroke="#26232E" stroke-width="3" stroke-linejoin="round"/>
+  <!-- fold crease -->
+  <path d="M 26 40 L 58 63" fill="none" stroke="#26232E" stroke-width="2.4"
+        stroke-linecap="round"/>
 </svg>
